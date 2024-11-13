@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Game with UI</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-ui {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #game-ui p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-ui">
+        <p id="score">Score: 0</p>
+        <p id="counter">Actions: 0</p>
+        <button id="reset-button">Reset Game</button>
+    </div>
+    <!-- Make sure to use type="module" -->
+    <script type="module" src="main.js"></script>
+</body>
+</html>
