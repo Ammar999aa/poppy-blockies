@@ -22,15 +22,36 @@
         #game-ui p {
             margin: 5px 0;
         }
+        footer {
+            width: 100%;
+            background-color: #FFFFFF20;
+            height: 70px;
+            position: fixed;
+            bottom: 0;
+            display: flex;
+        }
+        .instructions {
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 15px;
+            margin-inline-start: 15px;
+        }
     </style>
 </head>
 <body>
     <div id="game-ui">
-        <p id="score">Score: 0</p>
         <p id="counter">Actions: 0</p>
         <button id="reset-button">Reset Game</button>
     </div>
     <!-- Make sure to use type="module" -->
     <script type="module" src="main.js"></script>
+    <footer>
+        <div>
+            <script src="footer/colorBlock.js" type="module"></script>
+        </div>
+        <div class="instructions">
+            `a` = x-axis, `s` = y-axis, `d` = z-axiz
+        </div>
+    </footer>
 </body>
 </html>
