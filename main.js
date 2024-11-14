@@ -238,6 +238,14 @@ function onKeyDown(event) {
         }
     }
 
+    let position;
+    let col;
+
+    if (hoveredBlock) {
+        position = hoveredBlock.position.clone();
+        col = hoveredBlock.children[0].material.color;
+    }
+
     if (hoveredBlock) {
         if (event.key === '1') {
             changeGroupColor(hoveredBlock, purple);
@@ -266,6 +274,7 @@ function onKeyDown(event) {
         if (event.key === ' ') {
             const color = hoveredBlock.userData.color;
             removeBlockAndNeighbors(hoveredBlock, color);
+            createParticleEffect(position, col);
         }
 
         // Rotate the slice when pressing 'a'
@@ -279,6 +288,67 @@ function onKeyDown(event) {
             rotateVerticalSlice(hoveredBlock.position.z, 'z');
         }
     }
+}
+
+function createParticleEffect(position, col) {
+    const particleCount = 200; // Number of particles
+    const particles = new THREE.BufferGeometry();
+    const particlePositions = new Float32Array(particleCount * 3);
+    const particleVelocities = new Float32Array(particleCount * 3); // Store velocities
+
+    for (let i = 0; i < particleCount; i++) {
+        // Set initial random positions for each particle around the cube's position
+        const x = position.x + (Math.random() - 0.5) * 2;
+        const y = position.y + (Math.random() - 0.5) * 2;
+        const z = position.z + (Math.random() - 0.5) * 2;
+        particlePositions[i * 3] = x;
+        particlePositions[i * 3 + 1] = y;
+        particlePositions[i * 3 + 2] = z;
+
+        // Set a random velocity for each particle
+        particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1; // x velocity
+        particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * 0.1; // y velocity
+        particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1; // z velocity
+    }
+
+    particles.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particles.setAttribute('velocity', new THREE.BufferAttribute(particleVelocities, 3));
+
+    const particleMaterial = new THREE.PointsMaterial({
+        color: col, // Particle color 
+        size: 0.15,       // Size of each particle
+        transparent: true,
+        opacity: 0.8,
+    });
+
+    const particleSystem = new THREE.Points(particles, particleMaterial);
+    scene.add(particleSystem);
+
+    // Animate the particles to move and fade out
+    let particleLifetime = 1.0;
+    function animateParticles() {
+        particleLifetime -= 0.02;
+        particleMaterial.opacity = Math.max(0, particleLifetime); // Reduce opacity over time
+
+        // Update particle positions based on velocity
+        const positions = particles.attributes.position.array;
+        const velocities = particles.attributes.velocity.array;
+
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] += velocities[i * 3];       // x position += x velocity
+            positions[i * 3 + 1] += velocities[i * 3 + 1]; // y position += y velocity
+            positions[i * 3 + 2] += velocities[i * 3 + 2]; // z position += z velocity
+        }
+
+        particles.attributes.position.needsUpdate = true; // Inform Three.js to update the positions
+
+        if (particleLifetime > 0) {
+            requestAnimationFrame(animateParticles);
+        } else {
+            scene.remove(particleSystem); // Remove the particle system once faded out
+        }
+    }
+    animateParticles();
 }
 
 // Update the raycaster to detect hovered block
