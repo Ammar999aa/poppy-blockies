@@ -49,6 +49,63 @@ const blue = 0x6EC1E4
 const purple = 0x9B51E0
 const pink = 0xF3A5B1
 
+function createPyramidFrustum() {
+    const height = 0.15;
+    const topSize = 0.25; // Size of the top face
+    const bottomSize = 0.5; // Size of the bottom face
+
+    // Define the vertices for a frustum (truncated pyramid)
+    const vertices = [
+        // Bottom face (square)
+        -bottomSize, 0, -bottomSize, // 0
+        bottomSize, 0, -bottomSize, // 1
+        bottomSize, 0, bottomSize, // 2
+        -bottomSize, 0, bottomSize, // 3
+
+        // Top face (smaller square)
+        -topSize, height, -topSize, // 4
+        topSize, height, -topSize, // 5
+        topSize, height, topSize, // 6
+        -topSize, height, topSize  // 7
+    ];
+
+    // Define the faces (two triangles per side)
+    const indices = [
+        // Bottom face (ensure correct winding order)
+        0, 2, 1, 0, 3, 2,
+
+        // Top face (ensure correct winding order)
+        4, 5, 6, 4, 6, 7,
+
+        // Sides (correct winding order)
+        0, 1, 5, 0, 5, 4, // Front side
+        1, 2, 6, 1, 6, 5, // Right side
+        2, 3, 7, 2, 7, 6, // Back side
+        3, 0, 4, 3, 4, 7  // Left side
+    ];
+
+    // Create the geometry
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    // Create a material with a shiny look and double-sided rendering
+    const material = new THREE.MeshPhongMaterial({
+        color: 0xffa07a, // Adjust the color as desired
+        shininess: 80,
+        specular: 0xffffff,
+        side: THREE.DoubleSide // Render both sides of each face
+    });
+
+    // Create the mesh
+    const frustum = new THREE.Mesh(geometry, material);
+    frustum.castShadow = true;
+    frustum.receiveShadow = true;
+
+    return frustum;
+}
+
 // Function to create a grid of blocks with no gaps
 function createBlockGrid(size) {
     const colors = [
@@ -70,21 +127,73 @@ function createBlockGrid(size) {
                 const cubeMaterial = new THREE.MeshPhongMaterial({ color: randomColor });
 
                 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                const edge1 = createPyramidFrustum();
+                edge1.position.set(0, +0.5, 0)
+
+                const edge2 = createPyramidFrustum();
+                edge2.rotation.x = Math.PI;
+                edge2.position.set(0, -0.5, 0)
+
+                const edge3 = createPyramidFrustum();
+                edge3.rotation.x = Math.PI / 2;
+                edge3.position.set(0, 0, 0.5)
+
+                const edge4 = createPyramidFrustum();
+                edge4.rotation.x = -Math.PI / 2;
+                edge4.position.set(0, 0, -0.5)
+
+                const edge5 = createPyramidFrustum();
+                edge5.rotation.z = -Math.PI / 2;
+                edge5.position.set(+0.5, 0, 0)
+
+                const edge6 = createPyramidFrustum();
+                edge6.rotation.z = Math.PI / 2;
+                edge6.position.set(-0.5, 0, 0)
 
                 // Enable shadows for the cubes
                 cube.castShadow = true;
                 cube.receiveShadow = true;
 
+                edge1.castShadow = true;
+                edge1.receiveShadow = true;
+                edge2.castShadow = true;
+                edge2.receiveShadow = true;
+                edge3.castShadow = true;
+                edge3.receiveShadow = true;
+                edge4.castShadow = true;
+                edge4.receiveShadow = true;
+                edge5.castShadow = true;
+                edge5.receiveShadow = true;
+                edge6.castShadow = true;
+                edge6.receiveShadow = true;
+
+
+                const group = new THREE.Group();
+                group.add(cube);
+                group.add(edge1);
+                group.add(edge2);
+                group.add(edge3);
+                group.add(edge4);
+                group.add(edge5);
+                group.add(edge6);
+
                 // Position the cube in a tightly packed 3D grid
-                cube.position.set(
+                group.position.set(
                     x - (size / 2) + 0.5,
                     y - (size / 2) + 0.5,
                     z - (size / 2) + 0.5
                 );
 
-                cube.userData.color = randomColor;
-                scene.add(cube);
-                blocks.push(cube);
+                let c = randomColor
+                group.userData.color = c;
+                edge1.material.color.set(c);
+                edge2.material.color.set(c);
+                edge3.material.color.set(c);
+                edge4.material.color.set(c);
+                edge5.material.color.set(c);
+                edge6.material.color.set(c);
+                scene.add(group);
+                blocks.push(group);
             }
         }
     }
@@ -113,7 +222,7 @@ resetButton.addEventListener('click', resetGame);
 
 // Variables for rotating a slice
 let rotating = false;
-let rotationGroup = null;
+let sliceBlocks = null;
 let rotationAngle = 0;
 let targetAngle = Math.PI / 2; // 90 degrees
 
@@ -137,35 +246,44 @@ function resetGame() {
     counterElement.textContent = 'Actions: 0';
 }
 
+function changeGroupColor(group, color) {
+    // Loop through all children of the group
+    group.children.forEach(child => {
+        if (child.isMesh && child.material) {
+            child.material.color.set(color);
+        }
+    });
+}
+
 function onKeyDown(event) {
     // Change color to red when pressing '1'
 
     if (event.key === '1' && hoveredBlock) {
-        hoveredBlock.material.color.set(purple);
+        changeGroupColor(hoveredBlock, purple);
         hoveredBlock.userData.color = purple;
         updateCounter();
     } else if (event.key === '2' && hoveredBlock) {
-        hoveredBlock.material.color.set(red);
+        changeGroupColor(hoveredBlock, red);
         hoveredBlock.userData.color = red;
         updateCounter();
     } else if (event.key === '3' && hoveredBlock) {
-        hoveredBlock.material.color.set(orange);
+        changeGroupColor(hoveredBlock, orange);
         hoveredBlock.userData.color = orange;
         updateCounter();
     } else if (event.key === '4' && hoveredBlock) {
-        hoveredBlock.material.color.set(yellow);
+        changeGroupColor(hoveredBlock, yellow);
         hoveredBlock.userData.color = yellow;
         updateCounter();
     } else if (event.key === '5' && hoveredBlock) {
-        hoveredBlock.material.color.set(green);
+        changeGroupColor(hoveredBlock, green);
         hoveredBlock.userData.color = green;
         updateCounter();
     } else if (event.key === '6' && hoveredBlock) {
-        hoveredBlock.material.color.set(blue);
+        changeGroupColor(hoveredBlock, blue);
         hoveredBlock.userData.color = blue;
         updateCounter();
     } else if (event.key === '7' && hoveredBlock) {
-        hoveredBlock.material.color.set(pink);
+        changeGroupColor(hoveredBlock, pink);
         hoveredBlock.userData.color = pink;
         updateCounter();
     }
@@ -198,10 +316,20 @@ function onKeyDown(event) {
 // Update the raycaster to detect hovered block
 function updateHoveredBlock() {
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(blocks);
+
+    // Use `true` as the second parameter to check children of groups
+    const intersects = raycaster.intersectObjects(blocks, true);
 
     if (intersects.length > 0) {
-        hoveredBlock = intersects[0].object;
+        const object = intersects[0].object;
+
+        // Check if the intersected object is part of a group
+        if (object.parent && object.parent.isGroup) {
+            hoveredBlock = object.parent; // Set hoveredBlock to the entire group
+            console.log(hoveredBlock);
+        } else {
+            hoveredBlock = object;
+        }
     } else {
         hoveredBlock = null;
     }
@@ -254,7 +382,6 @@ function getBlockAt(x, y, z) {
 
 function rotateVerticalSlice(coordinate, axis) {
     // Get all blocks in the slice that share the same x-coordinate
-    let sliceBlocks = null;
     if (axis == 'x') {
         sliceBlocks = blocks.filter(block => block.position.x === coordinate);
     } else if (axis == 'y') {
@@ -275,48 +402,6 @@ function rotateVerticalSlice(coordinate, axis) {
         );
     });
 }
-
-// // Function to rotate a vertical slice
-// function rotateSlice(xCoordinate) {
-//     if (rotating) return; // Prevent overlapping rotations
-
-//     rotating = true;
-
-//     // Create a new group for rotation
-//     rotationGroup = new THREE.Group();
-//     scene.add(rotationGroup);
-
-//     // Add all blocks with the same X-coordinate to the group
-//     blocks.forEach(block => {
-//         if (block.position.x === xCoordinate) {
-//             rotationGroup.add(block);
-//         }
-//     });
-
-//     // Animate the rotation
-//     rotationAngle = 0;
-//     targetAngle = Math.PI / 2; // 90 degrees
-// }
-
-// // Animate the rotation smoothly
-// function animateRotation() {
-//     if (rotating) {
-//         const rotationSpeed = 0.05;
-//         rotationAngle += rotationSpeed;
-
-//         // Rotate the group around the X-axis
-//         rotationGroup.rotation.x = rotationAngle;
-
-//         if (rotationAngle >= targetAngle) {
-//             // Finish rotation and clean up
-//             rotationGroup.rotation.x = targetAngle;
-//             rotating = false;
-//             // scene.remove(rotationGroup);
-//             // rotationGroup.children.forEach(block => scene.add(block));
-//             rotationGroup = null;
-//         }
-//     }
-// }
 
 animate();
 
