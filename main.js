@@ -108,96 +108,70 @@ function createPyramidFrustum() {
 
 // Function to create a grid of blocks with no gaps
 function createBlockGrid(size) {
-    const colors = [
-        red, // Coral Red
-        orange, // Sky Blue
-        yellow, // Golden Yellow
-        green, // Soft Orange
-        blue, // Soft Purple
-        purple, // Fresh Green
-        pink  // Soft Pink
-    ];
+    const colors = [red, orange, yellow, green, blue, purple, pink];
+
+    // Helper function to create a frustum and set its properties
+    function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0]) {
+        const frustum = createPyramidFrustum();
+        frustum.material.color.set(color);
+        frustum.rotation.set(rotation[0], rotation[1], rotation[2]);
+        frustum.position.set(position[0], position[1], position[2]);
+        frustum.castShadow = true;
+        frustum.receiveShadow = true;
+        return frustum;
+    }
+
     for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
             for (let z = 0; z < size; z++) {
-                const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-
                 // Assign a random color to each block
                 const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+                // Create the central cube
+                const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
                 const cubeMaterial = new THREE.MeshPhongMaterial({ color: randomColor });
-
                 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-                const edge1 = createPyramidFrustum();
-                edge1.position.set(0, +0.5, 0)
-
-                const edge2 = createPyramidFrustum();
-                edge2.rotation.x = Math.PI;
-                edge2.position.set(0, -0.5, 0)
-
-                const edge3 = createPyramidFrustum();
-                edge3.rotation.x = Math.PI / 2;
-                edge3.position.set(0, 0, 0.5)
-
-                const edge4 = createPyramidFrustum();
-                edge4.rotation.x = -Math.PI / 2;
-                edge4.position.set(0, 0, -0.5)
-
-                const edge5 = createPyramidFrustum();
-                edge5.rotation.z = -Math.PI / 2;
-                edge5.position.set(+0.5, 0, 0)
-
-                const edge6 = createPyramidFrustum();
-                edge6.rotation.z = Math.PI / 2;
-                edge6.position.set(-0.5, 0, 0)
-
-                // Enable shadows for the cubes
                 cube.castShadow = true;
                 cube.receiveShadow = true;
 
-                edge1.castShadow = true;
-                edge1.receiveShadow = true;
-                edge2.castShadow = true;
-                edge2.receiveShadow = true;
-                edge3.castShadow = true;
-                edge3.receiveShadow = true;
-                edge4.castShadow = true;
-                edge4.receiveShadow = true;
-                edge5.castShadow = true;
-                edge5.receiveShadow = true;
-                edge6.castShadow = true;
-                edge6.receiveShadow = true;
-
-
+                // Create all the frustums and add them to a group
                 const group = new THREE.Group();
                 group.add(cube);
-                group.add(edge1);
-                group.add(edge2);
-                group.add(edge3);
-                group.add(edge4);
-                group.add(edge5);
-                group.add(edge6);
 
-                // Position the cube in a tightly packed 3D grid
+                // Define the rotations and positions for each frustum
+                const frustumsData = [
+                    { rotation: [0, 0, 0], position: [0, 0.5, 0] },
+                    { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
+                    { rotation: [Math.PI / 2, 0, 0], position: [0, 0, 0.5] },
+                    { rotation: [-Math.PI / 2, 0, 0], position: [0, 0, -0.5] },
+                    { rotation: [0, 0, -Math.PI / 2], position: [0.5, 0, 0] },
+                    { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
+                ];
+
+                // Create frustums using the helper function
+                frustumsData.forEach(data => {
+                    const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
+                    group.add(frustum);
+                });
+
+                // Position the group in the 3D grid
                 group.position.set(
                     x - (size / 2) + 0.5,
                     y - (size / 2) + 0.5,
                     z - (size / 2) + 0.5
                 );
 
-                let c = randomColor
-                group.userData.color = c;
-                edge1.material.color.set(c);
-                edge2.material.color.set(c);
-                edge3.material.color.set(c);
-                edge4.material.color.set(c);
-                edge5.material.color.set(c);
-                edge6.material.color.set(c);
+                // Store the color in the group's userData for later use
+                group.userData.color = randomColor;
+
+                // Add the group to the scene and blocks array
                 scene.add(group);
                 blocks.push(group);
             }
         }
     }
 }
+
 
 createBlockGrid(5);
 
@@ -256,60 +230,54 @@ function changeGroupColor(group, color) {
 }
 
 function onKeyDown(event) {
-    // Change color to red when pressing '1'
-
-    if (event.key === '1' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, purple);
-        hoveredBlock.userData.color = purple;
-        updateCounter();
-    } else if (event.key === '2' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, red);
-        hoveredBlock.userData.color = red;
-        updateCounter();
-    } else if (event.key === '3' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, orange);
-        hoveredBlock.userData.color = orange;
-        updateCounter();
-    } else if (event.key === '4' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, yellow);
-        hoveredBlock.userData.color = yellow;
-        updateCounter();
-    } else if (event.key === '5' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, green);
-        hoveredBlock.userData.color = green;
-        updateCounter();
-    } else if (event.key === '6' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, blue);
-        hoveredBlock.userData.color = blue;
-        updateCounter();
-    } else if (event.key === '7' && hoveredBlock) {
-        changeGroupColor(hoveredBlock, pink);
-        hoveredBlock.userData.color = pink;
-        updateCounter();
+    // Determine if the counter should increment
+    let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd']
+    for (let i = 0; i < valid_moves.length; i++) {
+        if (event.key === valid_moves[i] && hoveredBlock) {
+            updateCounter();
+        }
     }
 
-    // Remove the hovered block and its neighbors when pressing space bar
-    if (event.key === ' ' && hoveredBlock) {
-        const color = hoveredBlock.userData.color;
-        removeBlockAndNeighbors(hoveredBlock, color);
-        updateCounter();
-    }
+    if (hoveredBlock) {
+        if (event.key === '1') {
+            changeGroupColor(hoveredBlock, purple);
+            hoveredBlock.userData.color = purple;
+        } else if (event.key === '2') {
+            changeGroupColor(hoveredBlock, red);
+            hoveredBlock.userData.color = red;
+        } else if (event.key === '3') {
+            changeGroupColor(hoveredBlock, orange);
+            hoveredBlock.userData.color = orange;
+        } else if (event.key === '4') {
+            changeGroupColor(hoveredBlock, yellow);
+            hoveredBlock.userData.color = yellow;
+        } else if (event.key === '5') {
+            changeGroupColor(hoveredBlock, green);
+            hoveredBlock.userData.color = green;
+        } else if (event.key === '6') {
+            changeGroupColor(hoveredBlock, blue);
+            hoveredBlock.userData.color = blue;
+        } else if (event.key === '7') {
+            changeGroupColor(hoveredBlock, pink);
+            hoveredBlock.userData.color = pink;
+        }
 
-    // Rotate the slice when pressing 'a'
-    if (event.key === 'a' && hoveredBlock) {
-        // rotateSlice(hoveredBlock.position.x);
-        rotateVerticalSlice(hoveredBlock.position.x, 'x');
-        updateCounter(); // Increment counter for rotation
-    }
-    if (event.key === 's' && hoveredBlock) {
-        // rotateSlice(hoveredBlock.position.x);
-        rotateVerticalSlice(hoveredBlock.position.y, 'y');
-        updateCounter(); // Increment counter for rotation
-    }
-    if (event.key === 'd' && hoveredBlock) {
-        // rotateSlice(hoveredBlock.position.x);
-        rotateVerticalSlice(hoveredBlock.position.z, 'z');
-        updateCounter(); // Increment counter for rotation
+        // Remove the hovered block and its neighbors when pressing space bar
+        if (event.key === ' ') {
+            const color = hoveredBlock.userData.color;
+            removeBlockAndNeighbors(hoveredBlock, color);
+        }
+
+        // Rotate the slice when pressing 'a'
+        if (event.key === 'a') {
+            rotateVerticalSlice(hoveredBlock.position.x, 'x');
+        }
+        if (event.key === 's') {
+            rotateVerticalSlice(hoveredBlock.position.y, 'y');
+        }
+        if (event.key === 'd') {
+            rotateVerticalSlice(hoveredBlock.position.z, 'z');
+        }
     }
 }
 
@@ -326,7 +294,6 @@ function updateHoveredBlock() {
         // Check if the intersected object is part of a group
         if (object.parent && object.parent.isGroup) {
             hoveredBlock = object.parent; // Set hoveredBlock to the entire group
-            console.log(hoveredBlock);
         } else {
             hoveredBlock = object;
         }
