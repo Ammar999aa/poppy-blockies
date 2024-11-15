@@ -67,6 +67,7 @@ directionalLight2.position.set(-10, -20, -10);
 directionalLight2.castShadow = true;
 scene.add(directionalLight2);
 
+
 const ambientLight = new THREE.AmbientLight(0x888888);
 scene.add(ambientLight);
 ambientLight.intensity = 2;
@@ -198,17 +199,27 @@ function createPyramidFrustum() {
         3, 0, 4, 3, 4, 7  // Left side
     ];
     const uvs = [
-        // Bottom face UVs
-        0, 0, // Vertex 0
-        1, 0, // Vertex 1
-        1, 1, // Vertex 2
-        0, 1, // Vertex 3
+        // Bottom face UVs (mapped as a square)
+        0, 0,  // Vertex 0
+        1, 0,  // Vertex 1
+        1, 1,  // Vertex 2
+        0, 1,  // Vertex 3
 
-        // Top face UVs
-        0, 0, // Vertex 4
-        1, 0, // Vertex 5
-        1, 1, // Vertex 6
-        0, 1  // Vertex 7
+        // Top face UVs (mapped as a square)
+        0.25, 0.25,  // Vertex 4
+        0.75, 0.25,  // Vertex 5
+        0.75, 0.75,  // Vertex 6
+        0.25, 0.75,  // Vertex 7
+
+        // Side faces UVs (mapped as rectangles, one per side)
+        // Front side
+        0, 0, 1, 0, 1, 1, 0, 1,
+        // Right side
+        0, 0, 1, 0, 1, 1, 0, 1,
+        // Back side
+        0, 0, 1, 0, 1, 1, 0, 1,
+        // Left side
+        0, 0, 1, 0, 1, 1, 0, 1
     ];
 
     // Create the geometry
@@ -281,10 +292,10 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                 ];
 
                 // Create frustums using the helper function
-                // frustumsData.forEach(data => {
-                //     const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
-                //     group.add(frustum);
-                // });
+                frustumsData.forEach(data => {
+                    const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
+                    group.add(frustum);
+                });
 
                 // Position the group in the 3D grid
                 group.position.set(
