@@ -506,27 +506,85 @@ function getBlockAt(x, y, z) {
 }
 
 function rotateVerticalSlice(coordinate, axis) {
-    // Get all blocks in the slice that share the same x-coordinate
-    if (axis == 'x') {
+    // Get all blocks in the slice that share the same coordinate based on the axis
+    console.log(blocks)
+    let sliceBlocks;
+    if (axis === 'x') {
         sliceBlocks = blocks.filter(block => block.position.x === coordinate);
-    } else if (axis == 'y') {
+    } else if (axis === 'y') {
         sliceBlocks = blocks.filter(block => block.position.y === coordinate);
-    } else if (axis == 'z') {
+    } else if (axis === 'z') {
         sliceBlocks = blocks.filter(block => block.position.z === coordinate);
     }
 
-    // Perform a 90-degree rotation for each block in the slice
-    sliceBlocks.forEach(block => {
-        const { x, y, z } = block.position;
+    // Create a temporary group and add the slice blocks to it
+    const tempGroup = new THREE.Group();
+    sliceBlocks.forEach(block => tempGroup.add(block));
+    scene.add(tempGroup);
 
-        // Apply a 90-degree rotation around the Y-axis (clockwise)
-        block.position.set(
-            axis == 'x' ? x : -x,
-            axis == 'y' ? y : -y,
-            axis == 'z' ? z : -z
-        );
+    // Set up animation variables
+    const duration = 1000; // Duration in milliseconds (1 second)
+    const startTime = performance.now();
+    const targetAngle = Math.PI; // Rotate 180 degrees
+
+    function animateRotation() {
+        const elapsedTime = performance.now() - startTime;
+        const t = Math.min(elapsedTime / duration, 1); // Calculate normalized time (0 to 1)
+
+        // Interpolate the rotation angle
+        const currentAngle = targetAngle * t;
+
+        // Apply rotation to the group
+        if (axis === 'x') {
+            tempGroup.rotation.x = currentAngle;
+        } else if (axis === 'y') {
+            tempGroup.rotation.y = currentAngle;
+        } else if (axis === 'z') {
+            tempGroup.rotation.z = currentAngle;
+        }
+
+        // Render the updated scene
+        renderer.render(scene, camera);
+
+        // Continue the animation until complete
+        if (t < 1) {
+            requestAnimationFrame(animateRotation);
+        } else {
+            // After animation, bake the group's transformation into each block
+            sliceBlocks.forEach(block => {
+                // Apply the group's transformation matrix to each block
+                block.applyMatrix4(tempGroup.matrix);
+
+                // Update the block's local rotation and position
+                block.rotation.setFromRotationMatrix(tempGroup.matrix);
+                block.position.setFromMatrixPosition(block.matrix);
+
+                // Remove block from group and re-add to scene
+                tempGroup.remove(block);
+                scene.add(block);
+            });
+
+            // Remove the group from the scene
+            scene.remove(tempGroup);
+
+            // Update the `blocks` array to reflect the new positions and rotations
+            updateBlocksArray();
+        }
+    }
+
+    animateRotation();
+    console.log(blocks)
+}
+
+// Function to update the `blocks` array
+function updateBlocksArray() {
+    blocks.forEach(block => {
+        block.updateMatrixWorld(); // Ensure the block's world matrix is updated
+        block.position.setFromMatrixPosition(block.matrixWorld);
+        block.rotation.setFromRotationMatrix(block.matrixWorld);
     });
 }
+
 
 animate();
 
