@@ -1,5 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
 
 const scene = new THREE.Scene();
 
@@ -37,6 +41,7 @@ const ambientLight = new THREE.AmbientLight(0x888888);
 scene.add(ambientLight);
 ambientLight.intensity = 2;
 
+
 let clock = new THREE.Clock();
 
 // Raycaster and mouse vector
@@ -54,6 +59,83 @@ const green = 0x6DD47E
 const blue = 0x6EC1E4
 const purple = 0x9B51E0
 const pink = 0xF3A5B1
+
+const particleCount = 10000/1.7; // Number of particles
+const dummy = new THREE.Object3D();
+
+const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
+const particleMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x888888,
+    metalness: 1.0,
+    roughness: 0.2,
+    clearcoat: 1,
+    clearcoatRoughness: 0.1,
+    emissive: new THREE.Color(0xffffff), 
+    emissiveIntensity: 2, 
+});
+const particleMesh = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
+
+// Add particles to the scene
+scene.add(particleMesh);
+
+// Generate random particle positions, rotations, and scales
+const particles = [];
+for (let i = 0; i < particleCount; i++) {
+    const x = Math.random() * 60 - 25;
+    const y = Math.random() * 60 - 25;
+    const z = Math.random() * 60 - 25;
+    const scale = Math.random() * 0.1 + 0.07;
+
+    particles.push({
+        position: { x, y, z },
+        scale,
+        speed: Math.random() * 0.02 + 0.01,
+        factor: Math.random() * 10 + 1,
+    });
+}
+
+// Animate the particles
+function animateParticles() {
+    particles.forEach((particle, i) => {
+        const t = clock.getElapsedTime() * particle.speed;
+
+        // Update position to oscillate
+        dummy.position.set(
+            particle.position.x + 0.3 * Math.cos(t * particle.factor),
+            particle.position.y + 0.3 * Math.sin(t * particle.factor),
+            particle.position.z + 0.3 * Math.sin(t * particle.factor)
+        );
+        
+        
+
+        // Update scale for pulsating effect
+        const scale = particle.scale * (1 + Math.sin(t) * 0.5);
+        dummy.scale.set(scale, scale, scale);
+
+        // Update rotation for dynamic movement
+        dummy.rotation.set(t * 2, t * 3, t * 4);
+
+        // Update transformation matrix
+        dummy.updateMatrix();
+        particleMesh.setMatrixAt(i, dummy.matrix);
+    });
+
+    // Notify Three.js that the instanced mesh has updated
+    particleMesh.instanceMatrix.needsUpdate = true;
+}
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.5, // Intensity (Increase for stronger bloom)
+    0.8, // Radius (Set to 0 for sharper highlights)
+    0.9 
+);
+// composer.addPass(bloomPass);
+
+
 
 function createPyramidFrustum() {
     const height = 0.15;
@@ -454,9 +536,12 @@ function animate() {
     // Check for hovered block
     updateHoveredBlock();
 
+    animateParticles();
+
     // Animate the slice rotation if needed
     // animateRotation();
 
     // Render the scene
-    renderer.render(scene, camera);
+    composer.render();
+
 }
