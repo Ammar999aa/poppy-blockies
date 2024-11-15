@@ -28,8 +28,14 @@ directionalLight.position.set(10, 20, 10);
 directionalLight.castShadow = true;
 scene.add(directionalLight);
 
+const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.2);
+directionalLight2.position.set(-10, -20, -10);
+directionalLight2.castShadow = true;
+scene.add(directionalLight2);
+
 const ambientLight = new THREE.AmbientLight(0x888888);
 scene.add(ambientLight);
+ambientLight.intensity = 2;
 
 let clock = new THREE.Clock();
 
