@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { TextureLoader } from 'three';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -32,6 +33,9 @@ startButton.addEventListener('click', () => {
 });
 
 const scene = new THREE.Scene();
+
+const loader = new TextureLoader();
+const bumpMap = loader.load('assets/wood_map.jpg');
 
 const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 15, 30);
@@ -193,19 +197,35 @@ function createPyramidFrustum() {
         2, 3, 7, 2, 7, 6, // Back side
         3, 0, 4, 3, 4, 7  // Left side
     ];
+    const uvs = [
+        // Bottom face UVs
+        0, 0, // Vertex 0
+        1, 0, // Vertex 1
+        1, 1, // Vertex 2
+        0, 1, // Vertex 3
+
+        // Top face UVs
+        0, 0, // Vertex 4
+        1, 0, // Vertex 5
+        1, 1, // Vertex 6
+        0, 1  // Vertex 7
+    ];
 
     // Create the geometry
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.setIndex(indices);
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); // Add UVs
     geometry.computeVertexNormals();
 
     // Create a material with a shiny look and double-sided rendering
     const material = new THREE.MeshPhongMaterial({
         color: 0xffa07a, // Adjust the color as desired
-        shininess: 80,
+        shininess: 5,
         specular: 0xffffff,
-        side: THREE.DoubleSide // Render both sides of each face
+        side: THREE.DoubleSide, // Render both sides of each face
+        bumpMap: bumpMap,
+        bumpScale: 1.1,
     });
 
     // Create the mesh
@@ -241,7 +261,7 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
 
                 // Create the central cube
                 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const cubeMaterial = new THREE.MeshPhongMaterial({ color: randomColor });
+                const cubeMaterial = new THREE.MeshStandardMaterial({ color: randomColor, bumpMap: bumpMap, bumpScale: 1.4 });
                 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
                 cube.castShadow = true;
                 cube.receiveShadow = true;
@@ -261,10 +281,10 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                 ];
 
                 // Create frustums using the helper function
-                frustumsData.forEach(data => {
-                    const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
-                    group.add(frustum);
-                });
+                // frustumsData.forEach(data => {
+                //     const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
+                //     group.add(frustum);
+                // });
 
                 // Position the group in the 3D grid
                 group.position.set(
