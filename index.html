@@ -4,73 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Poppy Blockies</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        #menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 100; /* Ensure it overlays other content */
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 20px;
-        }
-        #menu button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 18px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        #menu button:hover {
-            background-color: #0056b3;
-        }
-        #game-ui, footer {
-            display: none; /* Hide game content initially */
-        }
-        #game-ui.show, footer.show {
-            display: block; /* Show content when menu is hidden */
-        }
-        #game-ui {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            color: #ffffff;
-            font-family: Arial, sans-serif;
-            background-color: rgba(0, 0, 0, 0.6);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #game-ui p {
-            margin: 5px 0;
-        }
-        footer {
-            width: 100%;
-            background-color: #FFFFFF20;
-            height: 70px;
-            position: fixed;
-            bottom: 0;
-            display: flex;
-        }
-        .instructions {
-            color: white;
-            font-family: 'Courier New', Courier, monospace;
-            margin-top: 15px;
-            margin-inline-start: 15px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="menu">

@@ -127,8 +127,6 @@ function animateParticles() {
             particle.position.z + 0.3 * Math.sin(t * particle.factor)
         );
 
-
-
         // Update scale for pulsating effect
         const scale = particle.scale * (1 + Math.sin(t) * 0.5);
         dummy.scale.set(scale, scale, scale);
