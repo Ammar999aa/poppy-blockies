@@ -503,8 +503,14 @@ function getBlockAt(x, y, z) {
     );
 }
 
+let isRotating = false;
+
 function rotateVerticalSlice(coordinate, axis) {
     // Get all blocks in the slice that share the same coordinate based on the axis
+    // if already running
+    if (isRotating) return;
+    isRotating = true;
+
     console.log(blocks)
     let sliceBlocks;
     if (axis === 'x') {
@@ -549,6 +555,7 @@ function rotateVerticalSlice(coordinate, axis) {
             requestAnimationFrame(animateRotation);
         } else {
             // After animation, bake the group's transformation into each block
+            isRotating = false;
             sliceBlocks.forEach(block => {
                 const worldPosition = new THREE.Vector3();
                 block.getWorldPosition(worldPosition);
