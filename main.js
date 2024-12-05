@@ -3,21 +3,24 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import seedrandom from 'seedrandom';
 
 const gridSizeInput = document.getElementById('grid-size-input');
 const colorCountInput = document.getElementById('color-count-input');
+const seedInput = document.getElementById('seed-input');
 const startButton = document.getElementById('start-button');
 
 startButton.addEventListener('click', () => {
     const gridSize = parseInt(gridSizeInput.value, 10);
     const colorCount = parseInt(colorCountInput.value, 10);
+    const seedValue = seedInput.value.trim() || Date.now().toString();
 
     if (gridSize > 0 && gridSize <= 20 && colorCount >= 2 && colorCount <= 7) {
         // Clear any existing blocks if needed
         blocks.forEach(block => scene.remove(block));
         blocks.length = 0;
 
-        createBlockGrid(gridSize, colorCount);
+        createBlockGrid(gridSize, colorCount, seedValue);
     } else {
         alert('Please enter a grid size between 1 and 20');
     }
@@ -211,7 +214,9 @@ function createPyramidFrustum() {
 }
 
 // Function to create a grid of blocks with no gaps
-export function createBlockGrid(size, colorCount = 7) {
+export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString()) {
+    const rng = seedrandom(seed);
+
     const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
 
     // Helper function to create a frustum and set its properties
@@ -229,7 +234,7 @@ export function createBlockGrid(size, colorCount = 7) {
         for (let y = 0; y < size; y++) {
             for (let z = 0; z < size; z++) {
                 // Assign a random color to each block
-                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                const randomColor = colors[Math.floor(rng() * colors.length)];
 
                 // Create the central cube
                 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);

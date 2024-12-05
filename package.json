@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "seedrandom": "^3.0.5",
     "three": "^0.168.0"
   },
   "devDependencies": {
