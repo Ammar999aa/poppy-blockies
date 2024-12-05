@@ -5,17 +5,19 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 const gridSizeInput = document.getElementById('grid-size-input');
+const colorCountInput = document.getElementById('color-count-input');
 const startButton = document.getElementById('start-button');
 
 startButton.addEventListener('click', () => {
     const gridSize = parseInt(gridSizeInput.value, 10);
+    const colorCount = parseInt(colorCountInput.value, 10);
 
-    if (gridSize > 0 && gridSize <= 20) {
+    if (gridSize > 0 && gridSize <= 20 && colorCount >= 2 && colorCount <= 7) {
         // Clear any existing blocks if needed
         blocks.forEach(block => scene.remove(block));
         blocks.length = 0;
 
-        createBlockGrid(gridSize);
+        createBlockGrid(gridSize, colorCount);
     } else {
         alert('Please enter a grid size between 1 and 20');
     }
@@ -209,8 +211,8 @@ function createPyramidFrustum() {
 }
 
 // Function to create a grid of blocks with no gaps
-export function createBlockGrid(size) {
-    const colors = [red, orange, yellow, green, blue, purple, pink];
+export function createBlockGrid(size, colorCount = 7) {
+    const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
 
     // Helper function to create a frustum and set its properties
     function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0]) {
