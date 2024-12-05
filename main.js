@@ -135,8 +135,6 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-
-
 function createPyramidFrustum() {
     const height = 0.15;
     const topSize = 0.25; // Size of the top face
@@ -499,9 +497,9 @@ function removeBlockAndNeighbors(block, color) {
 // Function to find a block at a given position
 function getBlockAt(x, y, z) {
     return blocks.find(block =>
-        block.position.x === x &&
-        block.position.y === y &&
-        block.position.z === z
+        Math.round(block.position.x) === Math.round(x) &&
+        Math.round(block.position.y) === Math.round(y) &&
+        Math.round(block.position.z) === Math.round(z)
     );
 }
 
@@ -510,11 +508,11 @@ function rotateVerticalSlice(coordinate, axis) {
     console.log(blocks)
     let sliceBlocks;
     if (axis === 'x') {
-        sliceBlocks = blocks.filter(block => block.position.x === coordinate);
+        sliceBlocks = blocks.filter(block => Math.round(block.position.x) === Math.round(coordinate));
     } else if (axis === 'y') {
-        sliceBlocks = blocks.filter(block => block.position.y === coordinate);
+        sliceBlocks = blocks.filter(block => Math.round(block.position.y) === Math.round(coordinate));
     } else if (axis === 'z') {
-        sliceBlocks = blocks.filter(block => block.position.z === coordinate);
+        sliceBlocks = blocks.filter(block => Math.round(block.position.z) === Math.round(coordinate));
     }
 
     // Create a temporary group and add the slice blocks to it
@@ -552,12 +550,13 @@ function rotateVerticalSlice(coordinate, axis) {
         } else {
             // After animation, bake the group's transformation into each block
             sliceBlocks.forEach(block => {
-                // Apply the group's transformation matrix to each block
-                block.applyMatrix4(tempGroup.matrix);
+                const worldPosition = new THREE.Vector3();
+                block.getWorldPosition(worldPosition);
+                block.position.copy(worldPosition);
 
-                // Update the block's local rotation and position
-                block.rotation.setFromRotationMatrix(tempGroup.matrix);
-                block.position.setFromMatrixPosition(block.matrix);
+                const worldQuaternion = new THREE.Quaternion();
+                block.getWorldQuaternion(worldQuaternion);
+                block.quaternion.copy(worldQuaternion);
 
                 // Remove block from group and re-add to scene
                 tempGroup.remove(block);
