@@ -4,6 +4,22 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
+const gridSizeInput = document.getElementById('grid-size-input');
+const startButton = document.getElementById('start-button');
+
+startButton.addEventListener('click', () => {
+    const gridSize = parseInt(gridSizeInput.value, 10);
+
+    if (gridSize > 0 && gridSize <= 20) {
+        // Clear any existing blocks if needed
+        blocks.forEach(block => scene.remove(block));
+        blocks.length = 0;
+
+        createBlockGrid(gridSize);
+    } else {
+        alert('Please enter a grid size between 1 and 20');
+    }
+});
 
 const scene = new THREE.Scene();
 
@@ -193,7 +209,7 @@ function createPyramidFrustum() {
 }
 
 // Function to create a grid of blocks with no gaps
-function createBlockGrid(size) {
+export function createBlockGrid(size) {
     const colors = [red, orange, yellow, green, blue, purple, pink];
 
     // Helper function to create a frustum and set its properties
@@ -258,7 +274,7 @@ function createBlockGrid(size) {
     }
 }
 
-
+// This is just for the preview before the game begins
 createBlockGrid(5);
 
 // Event listeners

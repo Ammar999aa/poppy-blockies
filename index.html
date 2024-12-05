@@ -3,11 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Game with UI</title>
+    <title>Poppy Blockies</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
+        }
+        #menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100; /* Ensure it overlays other content */
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+        }
+        #menu button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #menu button:hover {
+            background-color: #0056b3;
+        }
+        #game-ui, footer {
+            display: none; /* Hide game content initially */
+        }
+        #game-ui.show, footer.show {
+            display: block; /* Show content when menu is hidden */
         }
         #game-ui {
             position: fixed;
@@ -39,10 +73,19 @@
     </style>
 </head>
 <body>
+    <div id="menu">
+        <p>Poppy Blockies</p>
+        <p>Set the block grid size:</p>
+        <input id="grid-size-input" type="number" min="1" max="20" value="5" />
+        <button id="start-button">Start Game</button>
+    </div>
+    
+
     <div id="game-ui">
         <p id="counter">Actions: 0</p>
         <button id="reset-button">Reset Game</button>
     </div>
+
     <!-- Make sure to use type="module" -->
     <script type="module" src="main.js"></script>
     <footer>
@@ -50,8 +93,22 @@
             <script src="footer/colorBlock.js" type="module"></script>
         </div>
         <div class="instructions">
-            `a` = x-axis, `s` = y-axis, `d` = z-axiz
+            `a` = x-axis, `s` = y-axis, `d` = z-axis
         </div>
     </footer>
+
+    <script>
+        // Add event listener to the Start button
+        const startButton = document.getElementById('start-button');
+        const menu = document.getElementById('menu');
+        const gameUI = document.getElementById('game-ui');
+        const footer = document.querySelector('footer');
+
+        startButton.addEventListener('click', () => {
+            menu.style.display = 'none'; // Hide the menu
+            gameUI.classList.add('show'); // Show the game UI
+            footer.classList.add('show'); // Show the footer
+        });
+    </script>
 </body>
 </html>
