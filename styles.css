@@ -64,6 +64,7 @@ footer {
     color: white;
     margin-top: 15px;
     margin-inline-start: 15px;
+    font-family: 'Courier New', Courier, monospace;
 }
 #config-option {
     display: flex;
@@ -74,10 +75,13 @@ footer {
 #config-option div {
     flex-grow: 1;
 }
-#config-option input {
+#config-option input, select {
     background-color: #ffffff;
     height: 30px;
     margin-block: auto;
     padding-left: 10px;
     min-width: 40px;
+    border-radius: 3px;
+    border: solid 2px #d0d0d0;
+    font-family: monospace;
 }

@@ -5,14 +5,14 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import seedrandom from 'seedrandom';
 
-const gridSizeInput = document.getElementById('grid-size-input');
-const colorCountInput = document.getElementById('color-count-input');
+const gridSizeSelect = document.getElementById('grid-size-select');
+const colorCountSelect = document.getElementById('color-count-select');
 const seedInput = document.getElementById('seed-input');
 const startButton = document.getElementById('start-button');
 
 startButton.addEventListener('click', () => {
-    const gridSize = parseInt(gridSizeInput.value, 10);
-    const colorCount = parseInt(colorCountInput.value, 10);
+    const gridSize = parseInt(gridSizeSelect.value, 10);
+    const colorCount = parseInt(colorCountSelect.value, 10);
     const seedValue = seedInput.value.trim() || Date.now().toString();
 
     if (gridSize > 0 && gridSize <= 20 && colorCount >= 2 && colorCount <= 7) {
