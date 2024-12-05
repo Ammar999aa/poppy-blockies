@@ -60,7 +60,7 @@ const blue = 0x6EC1E4
 const purple = 0x9B51E0
 const pink = 0xF3A5B1
 
-const particleCount = 10000/1.7; // Number of particles
+const particleCount = 10000 / 1.7; // Number of particles
 const dummy = new THREE.Object3D();
 
 const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
@@ -70,8 +70,8 @@ const particleMaterial = new THREE.MeshPhysicalMaterial({
     roughness: 0.2,
     clearcoat: 1,
     clearcoatRoughness: 0.1,
-    emissive: new THREE.Color(0xffffff), 
-    emissiveIntensity: 2, 
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 2,
 });
 const particleMesh = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
 
@@ -105,8 +105,8 @@ function animateParticles() {
             particle.position.y + 0.3 * Math.sin(t * particle.factor),
             particle.position.z + 0.3 * Math.sin(t * particle.factor)
         );
-        
-        
+
+
 
         // Update scale for pulsating effect
         const scale = particle.scale * (1 + Math.sin(t) * 0.5);
@@ -131,9 +131,9 @@ const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
     0.5, // Intensity (Increase for stronger bloom)
     0.8, // Radius (Set to 0 for sharper highlights)
-    0.9 
+    0.9
 );
-// composer.addPass(bloomPass);
+composer.addPass(bloomPass);
 
 
 
