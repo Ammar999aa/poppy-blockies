@@ -7,6 +7,7 @@ import seedrandom from 'seedrandom';
 
 const gridSizeSelect = document.getElementById('grid-size-select');
 const colorCountSelect = document.getElementById('color-count-select');
+const actionInput = document.getElementById('moves-input');
 const seedInput = document.getElementById('seed-input');
 const startButton = document.getElementById('start-button');
 
@@ -14,6 +15,10 @@ startButton.addEventListener('click', () => {
     const gridSize = parseInt(gridSizeSelect.value, 10);
     const colorCount = parseInt(colorCountSelect.value, 10);
     const seedValue = seedInput.value.trim() || Date.now().toString();
+    const moveLimit = parseInt(actionInput.value, 10);
+
+    actionCount = moveLimit;
+    counterElement.textContent = `Actions: ${actionCount}`;
 
     if (gridSize > 0 && gridSize <= 20 && colorCount >= 2 && colorCount <= 7) {
         // Clear any existing blocks if needed
@@ -315,7 +320,7 @@ function updateScore(points) {
 
 // Function to update the action counter
 function updateCounter() {
-    actionCount++;
+    actionCount--;
     counterElement.textContent = `Actions: ${actionCount}`;
 }
 

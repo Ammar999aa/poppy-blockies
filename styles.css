@@ -66,6 +66,9 @@ footer {
     margin-inline-start: 15px;
     font-family: 'Courier New', Courier, monospace;
 }
+#counter {
+    font-family: monospace;
+}
 #config-option {
     display: flex;
     /* gap: 20px; */
@@ -80,8 +83,11 @@ footer {
     height: 30px;
     margin-block: auto;
     padding-left: 10px;
-    min-width: 40px;
+    min-width: 50.5px;
     border-radius: 3px;
     border: solid 2px #d0d0d0;
     font-family: monospace;
+}
+#reset-button {
+    display: none;
 }
