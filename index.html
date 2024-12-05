@@ -65,6 +65,15 @@
         </div>
     </footer>
 
+    <div id="win-screen" class="overlay hidden">
+        <h1>👾 You Win! 👾</h1>
+        <button id="restart-button-win">Play Again</button>
+    </div>
+    <div id="lose-screen" class="overlay hidden">
+        <h1>You Ran out of Moves</h1>
+        <button id="restart-button-lose">Try Again</button>
+    </div>
+
     <script>
         // Add event listener to the Start button
         const startButton = document.getElementById('start-button');

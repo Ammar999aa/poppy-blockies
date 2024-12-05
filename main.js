@@ -312,19 +312,53 @@ let sliceBlocks = null;
 let rotationAngle = 0;
 let targetAngle = Math.PI / 2; // 90 degrees
 
+function checkGameConditions() {
+    // Win condition: all blocks are popped
+    if (blocks.length === 1) {
+        showWinScreen();
+        return;
+    }
+
+    // Lose condition: no moves left and blocks remain
+    if (actionCount <= 0) {
+        showLoseScreen();
+        return;
+    }
+}
+
+function showWinScreen() {
+    const winScreen = document.getElementById('win-screen');
+    winScreen.classList.remove('hidden'); // Show the win screen
+}
+
+function showLoseScreen() {
+    const loseScreen = document.getElementById('lose-screen');
+    loseScreen.classList.remove('hidden'); // Show the lose screen
+}
+
+document.getElementById('restart-button-win').addEventListener('click', restartGame);
+document.getElementById('restart-button-lose').addEventListener('click', restartGame);
+
 // Function to update the score
 function updateScore(points) {
     score += points;
     scoreElement.textContent = `Score: ${score}`;
 }
 
+// Not to be confused with the currently unused resetGame function
+function restartGame() {
+    location.reload(); // Reload the page to reset the game
+}
+
 // Function to update the action counter
 function updateCounter() {
     actionCount--;
     counterElement.textContent = `Actions: ${actionCount}`;
+
+    checkGameConditions();
 }
 
-// Function to reset the game
+// Not to be confused with restartGame
 function resetGame() {
     score = 0;
     actionCount = 0;
