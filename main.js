@@ -36,6 +36,7 @@ const scene = new THREE.Scene();
 
 const loader = new TextureLoader();
 const bumpMap = loader.load('assets/wood_map.jpg');
+const textMap = loader.load('assets/wood_texture.jpg')
 
 const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 15, 30);
@@ -83,6 +84,13 @@ let hoveredBlock = null;
 // Array to store blocks
 const blocks = [];
 
+const oak = 0xA1662F
+const birch = 0xefdbaa
+const redwood = 0x856425
+const somewood = 0xbf8f35
+const mahagony = 0xC04000
+const darkwood = 0x523e17
+const cedarwood = 0x9f4e35
 const red = 0xFF6F61
 const orange = 0xFFB347
 const yellow = 0xFFD700
@@ -169,6 +177,10 @@ function createPyramidFrustum() {
     const topSize = 0.25; // Size of the top face
     const bottomSize = 0.5; // Size of the bottom face
 
+    const woodHeight = 0.075
+    const woodTopSize = 0.45 
+
+
     // Define the vertices for a frustum (truncated pyramid)
     const vertices = [
         // Bottom face (square)
@@ -178,10 +190,10 @@ function createPyramidFrustum() {
         -bottomSize, 0, bottomSize, // 3
 
         // Top face (smaller square)
-        -topSize, height, -topSize, // 4
-        topSize, height, -topSize, // 5
-        topSize, height, topSize, // 6
-        -topSize, height, topSize  // 7
+        -woodTopSize, woodHeight, -woodTopSize, // 4
+        woodTopSize, woodHeight, -woodTopSize, // 5
+        woodTopSize, woodHeight, woodTopSize, // 6
+        -woodTopSize, woodHeight, woodTopSize  // 7
     ];
 
     // Define the faces (two triangles per side)
@@ -236,6 +248,7 @@ function createPyramidFrustum() {
         specular: 0xffffff,
         side: THREE.DoubleSide, // Render both sides of each face
         bumpMap: bumpMap,
+        map: textMap,
         bumpScale: 1.1,
     });
 
@@ -252,6 +265,7 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
     const rng = seedrandom(seed);
 
     const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
+    const woodColors = [oak, darkwood, mahagony, cedarwood, redwood, birch, somewood].slice(0, colorCount);
 
     // Helper function to create a frustum and set its properties
     function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0]) {
@@ -269,10 +283,11 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
             for (let z = 0; z < size; z++) {
                 // Assign a random color to each block
                 const randomColor = colors[Math.floor(rng() * colors.length)];
+                const randomWoodColor = woodColors[Math.floor(rng() * woodColors.length)];
 
                 // Create the central cube
                 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const cubeMaterial = new THREE.MeshStandardMaterial({ color: randomColor, bumpMap: bumpMap, bumpScale: 1.4 });
+                const cubeMaterial = new THREE.MeshStandardMaterial({ color: randomWoodColor, map: textMap, bumpMap: bumpMap, bumpScale: 1.4 });
                 const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
                 cube.castShadow = true;
                 cube.receiveShadow = true;
@@ -293,7 +308,7 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
 
                 // Create frustums using the helper function
                 frustumsData.forEach(data => {
-                    const frustum = createFrustumWithColor(randomColor, data.rotation, data.position);
+                    const frustum = createFrustumWithColor(randomWoodColor, data.rotation, data.position);
                     group.add(frustum);
                 });
 
@@ -305,7 +320,7 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                 );
 
                 // Store the color in the group's userData for later use
-                group.userData.color = randomColor;
+                group.userData.color = randomWoodColor;
 
                 // Add the group to the scene and blocks array
                 scene.add(group);
@@ -345,7 +360,6 @@ let targetAngle = Math.PI / 2; // 90 degrees
 
 function checkGameConditions() {
     // Win condition: all blocks are popped
-    console.log(blocks.length)
     if (blocks.length <= 0) {
         showWinScreen();
         return;
@@ -446,6 +460,7 @@ function onKeyDown(event) {
         // Remove the hovered block and its neighbors when pressing space bar
         if (event.key === ' ') {
             const color = hoveredBlock.userData.color;
+            console.log(color.toString(16))
             removeBlockAndNeighbors(hoveredBlock, color);
             createParticleEffect(position, col);
         }
@@ -604,7 +619,6 @@ function rotateVerticalSlice(coordinate, axis) {
     if (isRotating) return;
     isRotating = true;
 
-    console.log(blocks)
     let sliceBlocks;
     if (axis === 'x') {
         sliceBlocks = blocks.filter(block => Math.round(block.position.x) === Math.round(coordinate));
@@ -620,9 +634,9 @@ function rotateVerticalSlice(coordinate, axis) {
     scene.add(tempGroup);
 
     // Set up animation variables
-    const duration = 1000; // Duration in milliseconds (1 second)
+    const duration = 600; // Duration in milliseconds (1 second)
     const startTime = performance.now();
-    const targetAngle = Math.PI; // Rotate 180 degrees
+    const targetAngle = Math.PI/2; // Rotate 180 degrees
 
     function animateRotation() {
         const elapsedTime = performance.now() - startTime;
@@ -672,7 +686,6 @@ function rotateVerticalSlice(coordinate, axis) {
     }
 
     animateRotation();
-    console.log(blocks)
 }
 
 // Function to update the `blocks` array
