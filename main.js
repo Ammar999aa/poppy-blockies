@@ -314,7 +314,8 @@ let targetAngle = Math.PI / 2; // 90 degrees
 
 function checkGameConditions() {
     // Win condition: all blocks are popped
-    if (blocks.length === 1) {
+    console.log(blocks.length)
+    if (blocks.length <= 0) {
         showWinScreen();
         return;
     }
@@ -378,11 +379,6 @@ function changeGroupColor(group, color) {
 function onKeyDown(event) {
     // Determine if the counter should increment
     let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd']
-    for (let i = 0; i < valid_moves.length; i++) {
-        if (event.key === valid_moves[i] && hoveredBlock) {
-            updateCounter();
-        }
-    }
 
     let position;
     let col;
@@ -432,6 +428,12 @@ function onKeyDown(event) {
         }
         if (event.key === 'd') {
             rotateVerticalSlice(hoveredBlock.position.z, 'z');
+        }
+
+        for (let i = 0; i < valid_moves.length; i++) {
+            if (event.key === valid_moves[i] && hoveredBlock) {
+                updateCounter();
+            }
         }
     }
 }
