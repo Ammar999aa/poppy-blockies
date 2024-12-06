@@ -6,13 +6,31 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import seedrandom from 'seedrandom';
 
+const wood1Sound = new Audio('assets/wood1.mp3');
+const wood2Sound = new Audio('assets/wood2.mp3');
+const wood3Sound = new Audio('assets/wood3.mp3');
+
+const rock1Sound = new Audio('assets/rock1.mp3');
+const rock2Sound = new Audio('assets/rock2.mp3');
+const rock3Sound = new Audio('assets/rock3.mp3');
+const startSound = new Audio('assets/start.mp3');
+const backgroundMusic = new Audio('assets/ambient.mp3');
+
+
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.6;
+backgroundMusic.play();
+
 const gridSizeSelect = document.getElementById('grid-size-select');
 const colorCountSelect = document.getElementById('color-count-select');
 const actionInput = document.getElementById('moves-input');
 const seedInput = document.getElementById('seed-input');
 const startButton = document.getElementById('start-button');
+const controlPanel = document.getElementById('controls');
 
 startButton.addEventListener('click', () => {
+    startSound.play()
+
     const gridSize = parseInt(gridSizeSelect.value, 10);
     const colorCount = parseInt(colorCountSelect.value, 10);
     const seedValue = seedInput.value.trim() || Date.now().toString();
@@ -576,10 +594,12 @@ let isRotating = false;
 
 function checkGameConditions() {
     if (blocks.length <= 0) {
+        startSound.play()
         showWinScreen();
         return;
     }
     if (actionCount <= 0) {
+        startSound.play()
         showLoseScreen();
         return;
     }
@@ -628,11 +648,36 @@ function changeGroupColor(group, color) {
     });
 }
 
+const commentator = document.getElementById('commentator');
+
+const images = ['./assets/shocked.jpg', './assets/thumbs-up.jpg', './assets/smile.jpg', './assets/scared.png', './assets/laughing.jpg', './assets/crying.jpg']
+
 function onKeyDown(event) {
     let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd'];
 
     let position;
     let col;
+
+    if (event.key === 'p') {
+        if (commentator.style.visibility === "hidden") {
+            commentator.style.visibility = "visible";
+        }
+        else {
+            commentator.style.visibility = "hidden";
+        }
+    } else if (event.key === 'i') {
+        if (controlPanel.style.visibility === "hidden") {
+            controlPanel.style.visibility = "visible";
+        }
+        else {
+            controlPanel.style.visibility = "hidden";
+        }
+    }
+
+    if (hoveredBlock) {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        commentator.src = images[randomIndex];
+    }
 
     if (hoveredBlock) {
         position = hoveredBlock.position.clone();
@@ -668,6 +713,7 @@ function onKeyDown(event) {
             const color = hoveredBlock.userData.color;
             removeBlockAndNeighbors(hoveredBlock, color);
             createParticleEffect(position, col);
+            playPop();
         }
 
         if (event.key === 'a') {
@@ -686,6 +732,14 @@ function onKeyDown(event) {
             }
         }
     }
+}
+
+function playPop() {
+    const world2sounds = [wood1Sound, wood2Sound, wood3Sound];
+    const world1Sounds = [rock1Sound, rock2Sound, rock3Sound];
+    // Pick a random sound
+    const randomSound = world1Sounds[Math.floor(Math.random() * world1Sounds.length)];
+    randomSound.play();
 }
 
 function createParticleEffect(position, col) {
