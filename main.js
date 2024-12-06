@@ -39,20 +39,17 @@ const scene = new THREE.Scene();
 
 const loader = new TextureLoader();
 const bumpMap = loader.load('assets/wood_map.jpg');
-const textMap = loader.load('assets/wood_texture.jpg')
+const textMap = loader.load('assets/wood_texture.jpg');
 
-
-// I need to set the skybox at game-setup instead!
 if (levelType === 'rustic') {
-    console.log("deff rust")
     const skyboxLoader = new THREE.CubeTextureLoader();
     const skyboxTexture = skyboxLoader.load([
-        'assets/field-skyboxes/sky_inter/xpos.png',
-        'assets/field-skyboxes/sky_inter/xneg.png',
-        'assets/field-skyboxes/sky_inter/ypos.png',
-        'assets/field-skyboxes/sky_inter/yneg.png',
-        'assets/field-skyboxes/sky_inter/zpos.png',
-        'assets/field-skyboxes/sky_inter/zneg.png'
+        'assets/field-skyboxes/sky/Daylight Box_Right.bmp',   // +x
+        'assets/field-skyboxes/sky/Daylight Box_Left.bmp',    // -x
+        'assets/field-skyboxes/sky/Daylight Box_Top.bmp',     // +y
+        'assets/field-skyboxes/sky/Daylight Box_Bottom.bmp',  // -y
+        'assets/field-skyboxes/sky/Daylight Box_Front.bmp',   // +z
+        'assets/field-skyboxes/sky/Daylight Box_Back.bmp'     // -z
     ]);
     scene.background = skyboxTexture;
 }
@@ -87,7 +84,6 @@ directionalLight2.position.set(-10, -20, -10);
 directionalLight2.castShadow = true;
 scene.add(directionalLight2);
 
-
 const ambientLight = new THREE.AmbientLight(0x888888);
 scene.add(ambientLight);
 ambientLight.intensity = 2;
@@ -99,7 +95,6 @@ if (levelType === 'rustic') {
     ambientLight.intensity = 1.5;
 }
 
-
 let clock = new THREE.Clock();
 
 // Raycaster and mouse vector
@@ -110,27 +105,104 @@ let hoveredBlock = null;
 // Array to store blocks
 const blocks = [];
 
-const oak = 0xA1662F
-const birch = 0xefdbaa
-const redwood = 0x856425
-const somewood = 0xbf8f35
-const mahagony = 0xC04000
-const darkwood = 0x523e17
-const cedarwood = 0x9f4e35
-const red = 0xFF6F61
-const orange = 0xFFB347
-const yellow = 0xFFD700
-const green = 0x6DD47E
-const blue = 0x6EC1E4
-const purple = 0x9B51E0
-const pink = 0xF3A5B1
+// Predefine colors
+const oak = 0xA1662F;
+const birch = 0xefdbaa;
+const redwood = 0x856425;
+const somewood = 0xbf8f35;
+const mahagony = 0xC04000;
+const darkwood = 0x523e17;
+const cedarwood = 0x9f4e35;
+const red = 0xFF6F61;
+const orange = 0xFFB347;
+const yellow = 0xFFD700;
+const green = 0x6DD47E;
+const blue = 0x6EC1E4;
+const purple = 0x9B51E0;
+const pink = 0xF3A5B1;
 
+// Precompute geometry & materials for cubes and frustums
+const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+const rusticCubeMaterialBase = new THREE.MeshStandardMaterial({ map: textMap, bumpMap: bumpMap, bumpScale: 1.4 });
+const spaceCubeMaterialBase = new THREE.MeshStandardMaterial({ color: 0xffffff });
+
+// Create the frustum geometry and UVs once
+function createFrustumGeometry() {
+    const bottomSize = 0.5;
+    const woodHeight = 0.075;
+    const woodTopSize = 0.45;
+    const spaceHeight = 0.15;
+    const spaceTopSize = 0.25;
+
+    const height = (levelType === 'rustic') ? woodHeight : spaceHeight;
+    const topSize = (levelType === 'rustic') ? woodTopSize : spaceTopSize;
+
+    const vertices = [
+        -bottomSize, 0, -bottomSize,
+         bottomSize, 0, -bottomSize,
+         bottomSize, 0,  bottomSize,
+        -bottomSize, 0,  bottomSize,
+
+        -topSize, height, -topSize,
+         topSize, height, -topSize,
+         topSize, height,  topSize,
+        -topSize, height,  topSize
+    ];
+
+    const indices = [
+        0, 2, 1, 0, 3, 2,
+        4, 5, 6, 4, 6, 7,
+        0, 1, 5, 0, 5, 4,
+        1, 2, 6, 1, 6, 5,
+        2, 3, 7, 2, 7, 6,
+        3, 0, 4, 3, 4, 7
+    ];
+
+    const uvs = [
+        // Bottom face
+        0,0, 1,0, 1,1, 0,1,
+        // Top face
+        0.25,0.25, 0.75,0.25, 0.75,0.75, 0.25,0.75
+    ];
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setIndex(indices);
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute([
+        0,0,1,0,1,1,0,1, // bottom
+        0,0,1,0,1,1,0,1, // top
+        0,0,1,0,1,1,0,1, // side - repeated pattern for simplicity
+        0,0,1,0,1,1,0,1,
+        0,0,1,0,1,1,0,1,
+        0,0,1,0,1,1,0,1
+    ], 2));
+    geometry.computeVertexNormals();
+
+    return geometry;
+}
+
+const frustumGeometry = createFrustumGeometry();
+const frustumMaterial = levelType == 'rustic' ? new THREE.MeshPhongMaterial({
+    color: 0xffa07a,
+    shininess: 5,
+    specular: 0xffffff,
+    side: THREE.DoubleSide,
+    bumpMap: bumpMap,
+    map: textMap,
+    bumpScale: 1.1,
+}) : 
+new THREE.MeshPhongMaterial({
+    color: 0xffa07a,
+    shininess: 80,
+    specular: 0xffffff,
+    side: THREE.DoubleSide});
+
+// Particle Setup
 let particleMesh
 const particles = [];
 const dummy = new THREE.Object3D();
 if (levelType === 'space') {
-    const particleCount = 10000 / 1.7; // Number of particles
-
+    const particleCount = 10000 / 1.7; 
     const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
     const particleMaterial = new THREE.MeshPhysicalMaterial({
         color: 0x888888,
@@ -142,10 +214,8 @@ if (levelType === 'space') {
         emissiveIntensity: 2,
     });
     particleMesh = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
-
-    // Add particles to the scene
     scene.add(particleMesh);
-    // Generate random particle positions, rotations, and scales
+
     for (let i = 0; i < particleCount; i++) {
         const x = Math.random() * 60 - 25;
         const y = Math.random() * 60 - 25;
@@ -159,17 +229,13 @@ if (levelType === 'space') {
             factor: Math.random() * 10 + 1,
         });
     }
-}
-else if (levelType === 'rustic') {
-    const pollenCount = 500; // Much fewer than space
+} else if (levelType === 'rustic') {
+    const pollenCount = 500; 
     const pollenGeometry = new THREE.SphereGeometry(0.05, 6, 6);
-    const pollenMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffdf9e // a warm, pollen-like color
-    });
+    const pollenMaterial = new THREE.MeshBasicMaterial({ color: 0xffdf9e });
     particleMesh = new THREE.InstancedMesh(pollenGeometry, pollenMaterial, pollenCount);
     scene.add(particleMesh);
 
-    // Generate random pollen positions, subtle motion, less pronounced movement
     for (let i = 0; i < pollenCount; i++) {
         const x = Math.random() * 30 - 15;
         const y = Math.random() * 30 - 10;
@@ -184,149 +250,52 @@ else if (levelType === 'rustic') {
         });
     }
 }
+
 function animateParticles() {
     particles.forEach((particle, i) => {
         const t = clock.getElapsedTime() * particle.speed;
 
-        // Update position to oscillate
         dummy.position.set(
             particle.position.x + 0.3 * Math.cos(t * particle.factor),
             particle.position.y + 0.3 * Math.sin(t * particle.factor),
             particle.position.z + 0.3 * Math.sin(t * particle.factor)
         );
 
-        // Update scale for pulsating effect
         const scale = particle.scale * (1 + Math.sin(t) * 0.5);
         dummy.scale.set(scale, scale, scale);
 
-        // Update rotation for dynamic movement
         dummy.rotation.set(t * 2, t * 3, t * 4);
-
-        // Update transformation matrix
         dummy.updateMatrix();
         particleMesh.setMatrixAt(i, dummy.matrix);
     });
 
-    // Notify Three.js that the instanced mesh has updated
     particleMesh.instanceMatrix.needsUpdate = true;
 }
+
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 
 const bloomPass = new UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    0.5, // Intensity (Increase for stronger bloom)
-    0.8, // Radius (Set to 0 for sharper highlights)
+    0.5, 
+    0.8, 
     0.9
 );
 composer.addPass(bloomPass);
 
 function createPyramidFrustum(space = false) {
-    const spaceHeight = 0.15;
-    const spaceTopSize = 0.25; // Size of the top face
-    const bottomSize = 0.5; // Size of the bottom face
-
-    const woodHeight = 0.075
-    const woodTopSize = 0.45 
-    let height, topSize;
-    if(space){ height = spaceHeight; topSize = spaceTopSize;}
-    else {height = woodHeight; topSize = woodTopSize}
-
-
-    // Define the vertices for a frustum (truncated pyramid)
-    const vertices = [
-        // Bottom face (square)
-        -bottomSize, 0, -bottomSize, // 0
-        bottomSize, 0, -bottomSize, // 1
-        bottomSize, 0, bottomSize, // 2
-        -bottomSize, 0, bottomSize, // 3
-
-        // Top face (smaller square)
-        -topSize, height, -topSize, // 4
-        topSize, height, -topSize, // 5
-        topSize, height, topSize, // 6
-        -topSize, height, topSize  // 7
-    ];
-
-    // Define the faces (two triangles per side)
-    const indices = [
-        // Bottom face (ensure correct winding order)
-        0, 2, 1, 0, 3, 2,
-
-        // Top face (ensure correct winding order)
-        4, 5, 6, 4, 6, 7,
-
-        // Sides (correct winding order)
-        0, 1, 5, 0, 5, 4, // Front side
-        1, 2, 6, 1, 6, 5, // Right side
-        2, 3, 7, 2, 7, 6, // Back side
-        3, 0, 4, 3, 4, 7  // Left side
-    ];
-    const uvs = [
-        // Bottom face UVs (mapped as a square)
-        0, 0,  // Vertex 0
-        1, 0,  // Vertex 1
-        1, 1,  // Vertex 2
-        0, 1,  // Vertex 3
-
-        // Top face UVs (mapped as a square)
-        0.25, 0.25,  // Vertex 4
-        0.75, 0.25,  // Vertex 5
-        0.75, 0.75,  // Vertex 6
-        0.25, 0.75,  // Vertex 7
-
-        // Side faces UVs (mapped as rectangles, one per side)
-        // Front side
-        0, 0, 1, 0, 1, 1, 0, 1,
-        // Right side
-        0, 0, 1, 0, 1, 1, 0, 1,
-        // Back side
-        0, 0, 1, 0, 1, 1, 0, 1,
-        // Left side
-        0, 0, 1, 0, 1, 1, 0, 1
-    ];
-
-    // Create the geometry
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-    geometry.setIndex(indices);
-    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); // Add UVs
-    geometry.computeVertexNormals();
-
-    // Create a material with a shiny look and double-sided rendering
-    const material = new THREE.MeshPhongMaterial({
-        color: 0xffa07a, // Adjust the color as desired
-        shininess: 5,
-        specular: 0xffffff,
-        side: THREE.DoubleSide, // Render both sides of each face
-        bumpMap: bumpMap,
-        map: textMap,
-        bumpScale: 1.1,
-    });
-
-    // Create the mesh
-    const frustum = new THREE.Mesh(geometry, material);
+    // Minimal change: now we just reuse the precomputed frustumGeometry and frustumMaterial
+    const frustum = new THREE.Mesh(frustumGeometry, frustumMaterial);
     frustum.castShadow = true;
     frustum.receiveShadow = true;
-
     return frustum;
 }
 
-// Function to create a grid of blocks with no gaps
 export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString()) {
     const rng = seedrandom(seed);
 
-    // For rustic level, we use woodColors and textures
     const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
     const woodColors = [oak, darkwood, mahagony, cedarwood, redwood, birch, somewood].slice(0, colorCount);
-
-    function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0], space = false) {
-        const frustum = createPyramidFrustum(space);
-        frustum.material.color.set(color);
-        frustum.rotation.set(...rotation);
-        frustum.position.set(...position);
-        return frustum;
-    }
 
     for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
@@ -334,21 +303,16 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                 let chosenColor;
                 let material;
                 if (levelType === 'rustic') {
-                    // Use wood colors and texture maps
                     chosenColor = woodColors[Math.floor(rng() * woodColors.length)];
-                    material = new THREE.MeshStandardMaterial({ 
-                        color: chosenColor, 
-                        map: textMap, 
-                        bumpMap: bumpMap, 
-                        bumpScale: 1.4 
-                    });
+                    material = rusticCubeMaterialBase.clone();
+                    material.color.set(chosenColor);
                 } else {
-                    // Space level with plain colors
                     chosenColor = colors[Math.floor(rng() * colors.length)];
-                    material = new THREE.MeshStandardMaterial({ color: chosenColor });
+                    material = spaceCubeMaterialBase.clone();
+                    material.color.set(chosenColor);
                 }
 
-                const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+                // Use precomputed geometry
                 const cube = new THREE.Mesh(cubeGeometry, material);
                 cube.castShadow = true;
                 cube.receiveShadow = true;
@@ -357,7 +321,6 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                 group.add(cube);
 
                 if (levelType === 'rustic') {
-                    // Add the frustums in rustic mode
                     const frustumsData = [
                         { rotation: [0, 0, 0], position: [0, 0.5, 0] },
                         { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
@@ -367,12 +330,15 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                         { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
                     ];
                     frustumsData.forEach(data => {
-                        const frustum = createFrustumWithColor(chosenColor, data.rotation, data.position);
+                        const frustum = createPyramidFrustum(false);
+                        frustum.material = frustum.material.clone(); 
+                        frustum.material.color.set(chosenColor);
+                        frustum.rotation.set(...data.rotation);
+                        frustum.position.set(...data.position);
                         group.add(frustum);
                     });
                 }
                 if (levelType === 'space') {
-                    // Add the frustums in rustic mode
                     const frustumsData = [
                         { rotation: [0, 0, 0], position: [0, 0.5, 0] },
                         { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
@@ -382,10 +348,15 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                         { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
                     ];
                     frustumsData.forEach(data => {
-                        const frustum = createFrustumWithColor(chosenColor, data.rotation, data.position, true);
+                        const frustum = createPyramidFrustum(true);
+                        frustum.material = frustum.material.clone(); 
+                        frustum.rotation.set(...data.rotation);
+                        frustum.position.set(...data.position);
+                        frustum.material.color.set(chosenColor);
                         group.add(frustum);
                     });
                 }
+
                 group.position.set(
                     x - (size / 2) + 0.5,
                     y - (size / 2) + 0.5,
@@ -399,6 +370,8 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
         }
     }
 }
+
+// This is just for the preview before the game begins
 createBlockGrid(5);
 
 // Event listeners
@@ -421,19 +394,13 @@ const resetButton = document.getElementById('reset-button');
 resetButton.addEventListener('click', resetGame);
 
 // Variables for rotating a slice
-let rotating = false;
-let sliceBlocks = null;
-let rotationAngle = 0;
-let targetAngle = Math.PI / 2; // 90 degrees
+let isRotating = false;
 
 function checkGameConditions() {
-    // Win condition: all blocks are popped
     if (blocks.length <= 0) {
         showWinScreen();
         return;
     }
-
-    // Lose condition: no moves left and blocks remain
     if (actionCount <= 0) {
         showLoseScreen();
         return;
@@ -442,37 +409,32 @@ function checkGameConditions() {
 
 function showWinScreen() {
     const winScreen = document.getElementById('win-screen');
-    winScreen.classList.remove('hidden'); // Show the win screen
+    winScreen.classList.remove('hidden');
 }
 
 function showLoseScreen() {
     const loseScreen = document.getElementById('lose-screen');
-    loseScreen.classList.remove('hidden'); // Show the lose screen
+    loseScreen.classList.remove('hidden');
 }
 
 document.getElementById('restart-button-win').addEventListener('click', restartGame);
 document.getElementById('restart-button-lose').addEventListener('click', restartGame);
 
-// Function to update the score
 function updateScore(points) {
     score += points;
     scoreElement.textContent = `Score: ${score}`;
 }
 
-// Not to be confused with the currently unused resetGame function
 function restartGame() {
-    location.reload(); // Reload the page to reset the game
+    location.reload();
 }
 
-// Function to update the action counter
 function updateCounter() {
     actionCount--;
     counterElement.textContent = `Actions: ${actionCount}`;
-
     checkGameConditions();
 }
 
-// Not to be confused with restartGame
 function resetGame() {
     score = 0;
     actionCount = 0;
@@ -481,7 +443,6 @@ function resetGame() {
 }
 
 function changeGroupColor(group, color) {
-    // Loop through all children of the group
     group.children.forEach(child => {
         if (child.isMesh && child.material) {
             child.material.color.set(color);
@@ -490,8 +451,7 @@ function changeGroupColor(group, color) {
 }
 
 function onKeyDown(event) {
-    // Determine if the counter should increment
-    let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd']
+    let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd'];
 
     let position;
     let col;
@@ -525,15 +485,12 @@ function onKeyDown(event) {
             hoveredBlock.userData.color = pink;
         }
 
-        // Remove the hovered block and its neighbors when pressing space bar
         if (event.key === ' ') {
             const color = hoveredBlock.userData.color;
-            console.log(color.toString(16))
             removeBlockAndNeighbors(hoveredBlock, color);
             createParticleEffect(position, col);
         }
 
-        // Rotate the slice when pressing 'a'
         if (event.key === 'a') {
             rotateVerticalSlice(hoveredBlock.position.x, 'x');
         }
@@ -553,13 +510,12 @@ function onKeyDown(event) {
 }
 
 function createParticleEffect(position, col) {
-    const particleCount = 200; // Number of particles
-    const particles = new THREE.BufferGeometry();
+    const particleCount = 200;
+    const particlesGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
-    const particleVelocities = new Float32Array(particleCount * 3); // Store velocities
+    const particleVelocities = new Float32Array(particleCount * 3);
 
     for (let i = 0; i < particleCount; i++) {
-        // Set initial random positions for each particle around the cube's position
         const x = position.x + (Math.random() - 0.5) * 2;
         const y = position.y + (Math.random() - 0.5) * 2;
         const z = position.z + (Math.random() - 0.5) * 2;
@@ -567,65 +523,57 @@ function createParticleEffect(position, col) {
         particlePositions[i * 3 + 1] = y;
         particlePositions[i * 3 + 2] = z;
 
-        // Set a random velocity for each particle
-        particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1; // x velocity
-        particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * 0.1; // y velocity
-        particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1; // z velocity
+        particleVelocities[i * 3] = (Math.random() - 0.5) * 0.1;
+        particleVelocities[i * 3 + 1] = (Math.random() - 0.5) * 0.1;
+        particleVelocities[i * 3 + 2] = (Math.random() - 0.5) * 0.1;
     }
 
-    particles.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-    particles.setAttribute('velocity', new THREE.BufferAttribute(particleVelocities, 3));
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+    particlesGeo.setAttribute('velocity', new THREE.BufferAttribute(particleVelocities, 3));
 
     const particleMaterial = new THREE.PointsMaterial({
-        color: col, // Particle color 
-        size: 0.15,       // Size of each particle
+        color: col,
+        size: 0.15,
         transparent: true,
         opacity: 0.8,
     });
 
-    const particleSystem = new THREE.Points(particles, particleMaterial);
+    const particleSystem = new THREE.Points(particlesGeo, particleMaterial);
     scene.add(particleSystem);
 
-    // Animate the particles to move and fade out
     let particleLifetime = 1.0;
-    function animateParticles() {
+    function animateParticlesFade() {
         particleLifetime -= 0.02;
-        particleMaterial.opacity = Math.max(0, particleLifetime); // Reduce opacity over time
+        particleMaterial.opacity = Math.max(0, particleLifetime);
 
-        // Update particle positions based on velocity
-        const positions = particles.attributes.position.array;
-        const velocities = particles.attributes.velocity.array;
+        const positions = particlesGeo.attributes.position.array;
+        const velocities = particlesGeo.attributes.velocity.array;
 
         for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] += velocities[i * 3];       // x position += x velocity
-            positions[i * 3 + 1] += velocities[i * 3 + 1]; // y position += y velocity
-            positions[i * 3 + 2] += velocities[i * 3 + 2]; // z position += z velocity
+            positions[i * 3] += velocities[i * 3];
+            positions[i * 3 + 1] += velocities[i * 3 + 1];
+            positions[i * 3 + 2] += velocities[i * 3 + 2];
         }
 
-        particles.attributes.position.needsUpdate = true; // Inform Three.js to update the positions
+        particlesGeo.attributes.position.needsUpdate = true;
 
         if (particleLifetime > 0) {
-            requestAnimationFrame(animateParticles);
+            requestAnimationFrame(animateParticlesFade);
         } else {
-            scene.remove(particleSystem); // Remove the particle system once faded out
+            scene.remove(particleSystem);
         }
     }
-    animateParticles();
+    animateParticlesFade();
 }
 
-// Update the raycaster to detect hovered block
 function updateHoveredBlock() {
     raycaster.setFromCamera(mouse, camera);
-
-    // Use `true` as the second parameter to check children of groups
     const intersects = raycaster.intersectObjects(blocks, true);
 
     if (intersects.length > 0) {
         const object = intersects[0].object;
-
-        // Check if the intersected object is part of a group
         if (object.parent && object.parent.isGroup) {
-            hoveredBlock = object.parent; // Set hoveredBlock to the entire group
+            hoveredBlock = object.parent; 
         } else {
             hoveredBlock = object;
         }
@@ -634,26 +582,22 @@ function updateHoveredBlock() {
     }
 }
 
-// Track mouse movements
 document.addEventListener('mousemove', (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-// Recursive function to remove a block and its neighbors of the same color
 function removeBlockAndNeighbors(block, color) {
     if (!block) return;
 
     const index = blocks.indexOf(block);
     if (index === -1) return;
 
-    // Remove the block from the scene and the blocks array
     scene.remove(block);
     blocks.splice(index, 1);
 
     const { x, y, z } = block.position;
 
-    // Check adjacent blocks (6 directions)
     const neighbors = [
         getBlockAt(x + 1, y, z),
         getBlockAt(x - 1, y, z),
@@ -670,7 +614,6 @@ function removeBlockAndNeighbors(block, color) {
     });
 }
 
-// Function to find a block at a given position
 function getBlockAt(x, y, z) {
     return blocks.find(block =>
         Math.round(block.position.x) === Math.round(x) &&
@@ -679,13 +622,11 @@ function getBlockAt(x, y, z) {
     );
 }
 
-let isRotating = false;
+let rotating = false;
 
 function rotateVerticalSlice(coordinate, axis) {
-    // Get all blocks in the slice that share the same coordinate based on the axis
-    // if already running
-    if (isRotating) return;
-    isRotating = true;
+    if (rotating) return;
+    rotating = true;
 
     let sliceBlocks;
     if (axis === 'x') {
@@ -696,24 +637,19 @@ function rotateVerticalSlice(coordinate, axis) {
         sliceBlocks = blocks.filter(block => Math.round(block.position.z) === Math.round(coordinate));
     }
 
-    // Create a temporary group and add the slice blocks to it
     const tempGroup = new THREE.Group();
     sliceBlocks.forEach(block => tempGroup.add(block));
     scene.add(tempGroup);
 
-    // Set up animation variables
-    const duration = 600; // Duration in milliseconds (1 second)
+    const duration = 600;
     const startTime = performance.now();
-    const targetAngle = Math.PI/2; // Rotate 180 degrees
+    const targetAngle = Math.PI/2;
 
     function animateRotation() {
         const elapsedTime = performance.now() - startTime;
-        const t = Math.min(elapsedTime / duration, 1); // Calculate normalized time (0 to 1)
-
-        // Interpolate the rotation angle
+        const t = Math.min(elapsedTime / duration, 1);
         const currentAngle = targetAngle * t;
 
-        // Apply rotation to the group
         if (axis === 'x') {
             tempGroup.rotation.x = currentAngle;
         } else if (axis === 'y') {
@@ -722,15 +658,12 @@ function rotateVerticalSlice(coordinate, axis) {
             tempGroup.rotation.z = currentAngle;
         }
 
-        // Render the updated scene
         renderer.render(scene, camera);
 
-        // Continue the animation until complete
         if (t < 1) {
             requestAnimationFrame(animateRotation);
         } else {
-            // After animation, bake the group's transformation into each block
-            isRotating = false;
+            rotating = false;
             sliceBlocks.forEach(block => {
                 const worldPosition = new THREE.Vector3();
                 block.getWorldPosition(worldPosition);
@@ -740,15 +673,10 @@ function rotateVerticalSlice(coordinate, axis) {
                 block.getWorldQuaternion(worldQuaternion);
                 block.quaternion.copy(worldQuaternion);
 
-                // Remove block from group and re-add to scene
                 tempGroup.remove(block);
                 scene.add(block);
             });
-
-            // Remove the group from the scene
             scene.remove(tempGroup);
-
-            // Update the `blocks` array to reflect the new positions and rotations
             updateBlocksArray();
         }
     }
@@ -756,30 +684,20 @@ function rotateVerticalSlice(coordinate, axis) {
     animateRotation();
 }
 
-// Function to update the `blocks` array
 function updateBlocksArray() {
     blocks.forEach(block => {
-        block.updateMatrixWorld(); // Ensure the block's world matrix is updated
+        block.updateMatrixWorld();
         block.position.setFromMatrixPosition(block.matrixWorld);
         block.rotation.setFromRotationMatrix(block.matrixWorld);
     });
 }
-
 
 animate();
 
 function animate() {
     requestAnimationFrame(animate);
 
-    // Check for hovered block
     updateHoveredBlock();
-
     animateParticles();
-
-    // Animate the slice rotation if needed
-    // animateRotation();
-
-    // Render the scene
     composer.render();
-
 }
