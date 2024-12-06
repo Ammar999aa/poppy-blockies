@@ -132,3 +132,11 @@ footer {
 .overlay button:hover {
     background-color: #8440c3;
 }
+#commentator {
+    width: 200px;
+    height: 150px;
+    background-color: #a36cd6;
+    position: fixed;
+    top: 0;
+    right: 0;
+}

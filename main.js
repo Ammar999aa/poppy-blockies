@@ -385,12 +385,30 @@ function changeGroupColor(group, color) {
     });
 }
 
+const commentator = document.getElementById('commentator');
+
+const images = ['./assets/shocked.jpg', './assets/thumbs-up.jpg', './assets/smile.jpg', './assets/scared.png']
+
 function onKeyDown(event) {
     // Determine if the counter should increment
     let valid_moves = ['1', '2', '3', '4', '5', '6', '7', ' ', 'a', 's', 'd']
 
     let position;
     let col;
+
+    if (event.key === 'p') {
+        if (commentator.style.visibility === "hidden") {
+            commentator.style.visibility = "visible";
+        }
+        else {
+            commentator.style.visibility = "hidden";
+        }
+    }
+
+    if (hoveredBlock) {
+        const randomIndex = Math.floor(Math.random() * images.length);
+        commentator.src = images[randomIndex];
+    }
 
     if (hoveredBlock) {
         position = hoveredBlock.position.clone();
