@@ -8,7 +8,13 @@ import seedrandom from 'seedrandom';
 const wood1Sound = new Audio('assets/wood1.mp3');
 const wood2Sound = new Audio('assets/wood2.mp3');
 const wood3Sound = new Audio('assets/wood3.mp3');
+
+const rock1Sound = new Audio('assets/rock1.mp3');
+const rock2Sound = new Audio('assets/rock2.mp3');
+const rock3Sound = new Audio('assets/rock3.mp3');
+const startSound = new Audio('assets/start.mp3');
 const backgroundMusic = new Audio('assets/ambient.mp3');
+
 
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.6;
@@ -19,8 +25,11 @@ const colorCountSelect = document.getElementById('color-count-select');
 const actionInput = document.getElementById('moves-input');
 const seedInput = document.getElementById('seed-input');
 const startButton = document.getElementById('start-button');
+const controlPanel = document.getElementById('controls');
 
 startButton.addEventListener('click', () => {
+    startSound.play()
+
     const gridSize = parseInt(gridSizeSelect.value, 10);
     const colorCount = parseInt(colorCountSelect.value, 10);
     const seedValue = seedInput.value.trim() || Date.now().toString();
@@ -325,12 +334,14 @@ function checkGameConditions() {
     // Win condition: all blocks are popped
     console.log(blocks.length)
     if (blocks.length <= 0) {
+        startSound.play()
         showWinScreen();
         return;
     }
 
     // Lose condition: no moves left and blocks remain
     if (actionCount <= 0) {
+        startSound.play()
         showLoseScreen();
         return;
     }
@@ -403,6 +414,13 @@ function onKeyDown(event) {
         else {
             commentator.style.visibility = "hidden";
         }
+    } else if (event.key === 'i') {
+        if (controlPanel.style.visibility === "hidden") {
+            controlPanel.style.visibility = "visible";
+        }
+        else {
+            controlPanel.style.visibility = "hidden";
+        }
     }
 
     if (hoveredBlock) {
@@ -467,9 +485,10 @@ function onKeyDown(event) {
 }
 
 function playPop() {
-    const sounds = [wood1Sound, wood2Sound, wood3Sound];
+    const world2sounds = [wood1Sound, wood2Sound, wood3Sound];
+    const world1Sounds = [rock1Sound, rock2Sound, rock3Sound];
     // Pick a random sound
-    const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+    const randomSound = world1Sounds[Math.floor(Math.random() * world1Sounds.length)];
     randomSound.play();
 }
 
