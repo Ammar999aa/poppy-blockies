@@ -387,7 +387,7 @@ function changeGroupColor(group, color) {
 
 const commentator = document.getElementById('commentator');
 
-const images = ['./assets/shocked.jpg', './assets/thumbs-up.jpg', './assets/smile.jpg', './assets/scared.png']
+const images = ['./assets/shocked.jpg', './assets/thumbs-up.jpg', './assets/smile.jpg', './assets/scared.png', './assets/laughing.jpg', './assets/crying.jpg']
 
 function onKeyDown(event) {
     // Determine if the counter should increment
