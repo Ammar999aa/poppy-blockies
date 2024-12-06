@@ -5,6 +5,15 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import seedrandom from 'seedrandom';
 
+const wood1Sound = new Audio('assets/wood1.mp3');
+const wood2Sound = new Audio('assets/wood2.mp3');
+const wood3Sound = new Audio('assets/wood3.mp3');
+const backgroundMusic = new Audio('assets/ambient.mp3');
+
+backgroundMusic.loop = true;
+backgroundMusic.volume = 0.6;
+backgroundMusic.play();
+
 const gridSizeSelect = document.getElementById('grid-size-select');
 const colorCountSelect = document.getElementById('color-count-select');
 const actionInput = document.getElementById('moves-input');
@@ -417,6 +426,7 @@ function onKeyDown(event) {
             const color = hoveredBlock.userData.color;
             removeBlockAndNeighbors(hoveredBlock, color);
             createParticleEffect(position, col);
+            playPop();
         }
 
         // Rotate the slice when pressing 'a'
@@ -436,6 +446,13 @@ function onKeyDown(event) {
             }
         }
     }
+}
+
+function playPop() {
+    const sounds = [wood1Sound, wood2Sound, wood3Sound];
+    // Pick a random sound
+    const randomSound = sounds[Math.floor(Math.random() * sounds.length)];
+    randomSound.play();
 }
 
 function createParticleEffect(position, col) {
