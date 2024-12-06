@@ -4,6 +4,9 @@ let color = 0xFFFFFF
 
 let camera, scene, renderer, block;
 
+const levelSelect = document.getElementById('level-select');
+let levelType = levelSelect ? levelSelect.value : 'space';
+
 const group = new THREE.Group();
 
 const red = 0xFF6F61
@@ -13,6 +16,15 @@ const green = 0x6DD47E
 const blue = 0x6EC1E4
 const purple = 0x9B51E0
 const pink = 0xF3A5B1
+
+const oak = 0xA1662F;
+const birch = 0xefdbaa;
+const redwood = 0x856425;
+const somewood = 0xbf8f35;
+const mahagony = 0xC04000;
+const darkwood = 0x523e17;
+const cedarwood = 0x9f4e35;
+
 
 function createPyramidFrustum() {
     const height = 0.15;
@@ -152,19 +164,19 @@ function changeGroupColor(color) {
 
 function onKeyDown(event) {
     if (event.key === '1') {
-        changeGroupColor(purple)
+        changeGroupColor(levelType === 'rustic' ? oak : purple);
     } else if (event.key === '2') {
-        changeGroupColor(red)
+        changeGroupColor(levelType === 'rustic' ? darkwood : red);
     } else if (event.key === '3') {
-        changeGroupColor(orange)
+        changeGroupColor(levelType === 'rustic' ? mahagony : orange);
     } else if (event.key === '4') {
-        changeGroupColor(yellow)
+        changeGroupColor(levelType === 'rustic' ? cedarwood : yellow);
     } else if (event.key === '5') {
-        changeGroupColor(green)
+        changeGroupColor(levelType === 'rustic' ? redwood : green);
     } else if (event.key === '6') {
-        changeGroupColor(blue)
+        changeGroupColor(levelType === 'rustic' ? birch : blue);
     } else if (event.key === '7') {
-        changeGroupColor(pink)
+        changeGroupColor(levelType === 'rustic' ? somewood : pink);
     }
 }
 

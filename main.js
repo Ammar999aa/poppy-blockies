@@ -22,10 +22,8 @@ startButton.addEventListener('click', () => {
     counterElement.textContent = `Actions: ${actionCount}`;
 
     if (gridSize > 0 && gridSize <= 20 && colorCount >= 2 && colorCount <= 7) {
-        // Clear any existing blocks if needed
         blocks.forEach(block => scene.remove(block));
         blocks.length = 0;
-
         createBlockGrid(gridSize, colorCount, seedValue);
     } else {
         alert('Please enter a grid size between 1 and 20');
@@ -44,17 +42,18 @@ const textMap = loader.load('assets/wood_texture.jpg');
 if (levelType === 'rustic') {
     const skyboxLoader = new THREE.CubeTextureLoader();
     const skyboxTexture = skyboxLoader.load([
-        'assets/field-skyboxes/sky/Daylight Box_Right.bmp',   // +x
-        'assets/field-skyboxes/sky/Daylight Box_Left.bmp',    // -x
-        'assets/field-skyboxes/sky/Daylight Box_Top.bmp',     // +y
-        'assets/field-skyboxes/sky/Daylight Box_Bottom.bmp',  // -y
-        'assets/field-skyboxes/sky/Daylight Box_Front.bmp',   // +z
-        'assets/field-skyboxes/sky/Daylight Box_Back.bmp'     // -z
+        'assets/field-skyboxes/sky/Daylight Box_Right.bmp',
+        'assets/field-skyboxes/sky/Daylight Box_Left.bmp',
+        'assets/field-skyboxes/sky/Daylight Box_Top.bmp',
+        'assets/field-skyboxes/sky/Daylight Box_Bottom.bmp',
+        'assets/field-skyboxes/sky/Daylight Box_Front.bmp',
+        'assets/field-skyboxes/sky/Daylight Box_Back.bmp'
     ]);
     scene.background = skyboxTexture;
 }
 
-const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
+// Limit camera far plane to 80
+const camera = new THREE.PerspectiveCamera(18, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 15, 30);
 camera.lookAt(0, 0, 0);
 
@@ -95,17 +94,16 @@ if (levelType === 'rustic') {
     ambientLight.intensity = 1.5;
 }
 
+
+
 let clock = new THREE.Clock();
 
-// Raycaster and mouse vector
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let hoveredBlock = null;
-
-// Array to store blocks
 const blocks = [];
 
-// Predefine colors
+// Colors
 const oak = 0xA1662F;
 const birch = 0xefdbaa;
 const redwood = 0x856425;
@@ -121,12 +119,10 @@ const blue = 0x6EC1E4;
 const purple = 0x9B51E0;
 const pink = 0xF3A5B1;
 
-// Precompute geometry & materials for cubes and frustums
 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
 const rusticCubeMaterialBase = new THREE.MeshStandardMaterial({ map: textMap, bumpMap: bumpMap, bumpScale: 1.4 });
 const spaceCubeMaterialBase = new THREE.MeshStandardMaterial({ color: 0xffffff });
 
-// Create the frustum geometry and UVs once
 function createFrustumGeometry() {
     const bottomSize = 0.5;
     const woodHeight = 0.075;
@@ -158,26 +154,18 @@ function createFrustumGeometry() {
         3, 0, 4, 3, 4, 7
     ];
 
-    const uvs = [
-        // Bottom face
-        0,0, 1,0, 1,1, 0,1,
-        // Top face
-        0.25,0.25, 0.75,0.25, 0.75,0.75, 0.25,0.75
-    ];
-
     const geometry = new THREE.BufferGeometry();
     geometry.setIndex(indices);
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute([
         0,0,1,0,1,1,0,1, // bottom
         0,0,1,0,1,1,0,1, // top
-        0,0,1,0,1,1,0,1, // side - repeated pattern for simplicity
+        0,0,1,0,1,1,0,1, // side
         0,0,1,0,1,1,0,1,
         0,0,1,0,1,1,0,1,
         0,0,1,0,1,1,0,1
     ], 2));
     geometry.computeVertexNormals();
-
     return geometry;
 }
 
@@ -195,12 +183,13 @@ new THREE.MeshPhongMaterial({
     color: 0xffa07a,
     shininess: 80,
     specular: 0xffffff,
-    side: THREE.DoubleSide});
+    side: THREE.DoubleSide
+});
 
-// Particle Setup
-let particleMesh
+let particleMesh;
 const particles = [];
 const dummy = new THREE.Object3D();
+
 if (levelType === 'space') {
     const particleCount = 10000 / 1.7; 
     const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
@@ -221,7 +210,6 @@ if (levelType === 'space') {
         const y = Math.random() * 60 - 25;
         const z = Math.random() * 60 - 25;
         const scale = Math.random() * 0.1 + 0.07;
-
         particles.push({
             position: { x, y, z },
             scale,
@@ -231,7 +219,7 @@ if (levelType === 'space') {
     }
 } else if (levelType === 'rustic') {
     const pollenCount = 500; 
-    const pollenGeometry = new THREE.SphereGeometry(0.05, 6, 6);
+    const pollenGeometry = new THREE.SphereGeometry(0.15, 6, 6);
     const pollenMaterial = new THREE.MeshBasicMaterial({ color: 0xffdf9e });
     particleMesh = new THREE.InstancedMesh(pollenGeometry, pollenMaterial, pollenCount);
     scene.add(particleMesh);
@@ -241,7 +229,6 @@ if (levelType === 'space') {
         const y = Math.random() * 30 - 10;
         const z = Math.random() * 30 - 15;
         const scale = Math.random() * 0.1 + 0.05;
-
         particles.push({
             position: { x, y, z },
             scale,
@@ -260,7 +247,6 @@ function animateParticles() {
             particle.position.y + 0.3 * Math.sin(t * particle.factor),
             particle.position.z + 0.3 * Math.sin(t * particle.factor)
         );
-
         const scale = particle.scale * (1 + Math.sin(t) * 0.5);
         dummy.scale.set(scale, scale, scale);
 
@@ -268,7 +254,6 @@ function animateParticles() {
         dummy.updateMatrix();
         particleMesh.setMatrixAt(i, dummy.matrix);
     });
-
     particleMesh.instanceMatrix.needsUpdate = true;
 }
 
@@ -281,10 +266,10 @@ const bloomPass = new UnrealBloomPass(
     0.8, 
     0.9
 );
-composer.addPass(bloomPass);
+if(levelType == 'space')
+{composer.addPass(bloomPass);}
 
 function createPyramidFrustum(space = false) {
-    // Minimal change: now we just reuse the precomputed frustumGeometry and frustumMaterial
     const frustum = new THREE.Mesh(frustumGeometry, frustumMaterial);
     frustum.castShadow = true;
     frustum.receiveShadow = true;
@@ -293,7 +278,6 @@ function createPyramidFrustum(space = false) {
 
 export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString()) {
     const rng = seedrandom(seed);
-
     const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
     const woodColors = [oak, darkwood, mahagony, cedarwood, redwood, birch, somewood].slice(0, colorCount);
 
@@ -312,7 +296,6 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
                     material.color.set(chosenColor);
                 }
 
-                // Use precomputed geometry
                 const cube = new THREE.Mesh(cubeGeometry, material);
                 cube.castShadow = true;
                 cube.receiveShadow = true;
@@ -371,10 +354,206 @@ export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString
     }
 }
 
-// This is just for the preview before the game begins
+// --- GRASS FIELD IMPLEMENTATION (only if rustic) ---
+
+if (levelType === 'rustic') {
+    const PLANE_SIZE = 80; 
+
+    const planeGeometry = new THREE.CircleGeometry(PLANE_SIZE, PLANE_SIZE);
+    const planeMaterial = new THREE.MeshStandardMaterial({
+        color: 0x77b32e,
+        side: THREE.DoubleSide
+    });
+    const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
+    planeMesh.rotation.x = -Math.PI / 2; 
+    planeMesh.position.y = -8;
+    planeMesh.receiveShadow = true;
+    scene.add(planeMesh);
+
+    // Grass field parameters
+    const BLADE_COUNT = 129000; // adjust if performance is an issue
+    const BLADE_WIDTH = 0.3;
+    const BLADE_HEIGHT = 0.8;
+    const BLADE_HEIGHT_VARIATION = 0.9;
+
+    const grassTexture = new THREE.TextureLoader().load('assets/grass.jpg');
+    const cloudTexture = new THREE.TextureLoader().load('assets/cloud.jpg');
+    cloudTexture.wrapS = cloudTexture.wrapT = THREE.RepeatWrapping;
+
+    const startTime = Date.now();
+    const timeUniform = { type: 'f', value: 0.0 };
+
+    // Updated Shaders
+    const grassVertexShader = `
+        precision mediump float;
+
+        attribute vec3 aColor;
+
+        varying vec2 vUv;
+        varying vec2 cloudUV;
+        varying vec3 vColor;
+
+        uniform float iTime;
+
+        void main() {
+        vUv = uv;
+        cloudUV = uv;
+        
+        // Assign the renamed attribute to vColor
+        vColor = aColor;
+
+        vec3 cpos = position;
+
+        float waveSize = 10.0;
+        float tipDistance = 0.3;
+        float centerDistance = 0.1;
+
+        if (vColor.x > 0.6) {
+            cpos.x += sin((iTime / 500.0) + (uv.x * waveSize)) * tipDistance;
+        } else if (vColor.x > 0.0) {
+            cpos.x += sin((iTime / 500.0) + (uv.x * waveSize)) * centerDistance;
+        }
+
+        cloudUV.x += iTime / 20000.0;
+        cloudUV.y += iTime / 10000.0;
+
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(cpos, 1.0);
+}
+    `;
+
+    const grassFragmentShader = `
+    precision mediump float;
+    uniform sampler2D grassTex;
+    uniform sampler2D cloudTex;
+    varying vec2 vUv;
+    varying vec2 cloudUV;
+    varying vec3 vColor;
+
+    void main() {
+      float contrast = 1.5;
+      float brightness = 0.1;
+      vec3 color = texture2D(grassTex, vUv).rgb * contrast;
+      color = color + vec3(brightness, brightness, brightness);
+      color = mix(color, texture2D(cloudTex, cloudUV).rgb, 0.4);
+      gl_FragColor = vec4(color, 1.0);
+    }
+    `;
+
+    const grassUniforms = {
+      grassTex: { value: grassTexture },
+      cloudTex: { value: cloudTexture },
+      iTime: timeUniform
+    };
+
+    const grassMaterial = new THREE.ShaderMaterial({
+      uniforms: grassUniforms,
+      vertexShader: grassVertexShader,
+      fragmentShader: grassFragmentShader,
+      vertexColors: true,
+      side: THREE.DoubleSide
+    });
+
+    function convertRange(val, oldMin, oldMax, newMin, newMax) {
+      return (((val - oldMin) * (newMax - newMin)) / (oldMax - oldMin)) + newMin;
+    }
+
+    function generateBlade(center, vArrOffset, uv) {
+      const MID_WIDTH = BLADE_WIDTH * 0.5;
+      const TIP_OFFSET = 0.1;
+      const height = BLADE_HEIGHT + (Math.random() * BLADE_HEIGHT_VARIATION);
+
+      const yaw = Math.random() * Math.PI * 2.0;
+      const yawUnitVec = new THREE.Vector3(Math.sin(yaw), 0, -Math.cos(yaw));
+      const tipBend = Math.random() * Math.PI * 2.0;
+      const tipBendUnitVec = new THREE.Vector3(Math.sin(tipBend), 0, -Math.cos(tipBend));
+
+      const bl = center.clone().add(yawUnitVec.clone().multiplyScalar((BLADE_WIDTH / 2)));
+      const br = center.clone().add(yawUnitVec.clone().multiplyScalar((BLADE_WIDTH / -2)));
+      const tl = center.clone().add(yawUnitVec.clone().multiplyScalar((MID_WIDTH / 2)));
+      const tr = center.clone().add(yawUnitVec.clone().multiplyScalar((MID_WIDTH / -2)));
+      const tc = center.clone().add(tipBendUnitVec.clone().multiplyScalar(TIP_OFFSET));
+
+      tl.y += height / 2.0;
+      tr.y += height / 2.0;
+      tc.y += height;
+
+      // Vertex Colors: bottom = black, mid = gray, top = white
+      const black = [0.0, 0.0, 0.0];
+      const gray = [0.5, 0.5, 0.5];
+      const white = [1.0, 1.0, 1.0];
+
+      const verts = [
+        { pos: bl.toArray(), uv: uv, color: black },
+        { pos: br.toArray(), uv: uv, color: black },
+        { pos: tr.toArray(), uv: uv, color: gray },
+        { pos: tl.toArray(), uv: uv, color: gray },
+        { pos: tc.toArray(), uv: uv, color: white }
+      ];
+
+      const indices = [
+        vArrOffset, vArrOffset+1, vArrOffset+2,
+        vArrOffset+2, vArrOffset+4, vArrOffset+3,
+        vArrOffset+3, vArrOffset, vArrOffset+2
+      ];
+
+      return { verts, indices };
+    }
+
+    function generateField() {
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+      const colors = [];
+
+      const surfaceMin = PLANE_SIZE / 2 * -1;
+      const surfaceMax = PLANE_SIZE / 2;
+
+      for (let i = 0; i < BLADE_COUNT; i++) {
+        const VERTEX_COUNT = 5;
+        const radius = PLANE_SIZE / 2;
+        const r = radius * Math.sqrt(Math.random());
+        const theta = Math.random() * 2.0 * Math.PI;
+        const x = r * Math.cos(theta);
+        const y = r * Math.sin(theta);
+
+        const pos = new THREE.Vector3(x, -7.5, y);
+        const uvX = convertRange(pos.x, surfaceMin, surfaceMax, 0, 1);
+        const uvY = convertRange(pos.z, surfaceMin, surfaceMax, 0, 1);
+
+        const blade = generateBlade(pos, i * VERTEX_COUNT, [uvX, uvY]);
+        blade.verts.forEach(vert => {
+          positions.push(...vert.pos);
+          uvs.push(...vert.uv);
+          colors.push(...vert.color);
+        });
+        blade.indices.forEach(ind => indices.push(ind));
+      }
+
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+      geom.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+      geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+      geom.setIndex(indices);
+      geom.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geom, grassMaterial);
+      mesh.position.y = -0.5; 
+      scene.add(mesh);
+    }
+
+    generateField();
+
+    // Update time in main animate function
+    const oldAnimate = animate;
+    animate = function() {
+      timeUniform.value = Date.now() - startTime;
+      oldAnimate();
+    }
+}
+
+// Initial small preview
 createBlockGrid(5);
 
-// Event listeners
 window.addEventListener('resize', onWindowResize, false);
 document.addEventListener('keydown', onKeyDown, false);
 
@@ -393,7 +572,6 @@ const resetButton = document.getElementById('reset-button');
 
 resetButton.addEventListener('click', resetGame);
 
-// Variables for rotating a slice
 let isRotating = false;
 
 function checkGameConditions() {
@@ -463,27 +641,28 @@ function onKeyDown(event) {
 
     if (hoveredBlock) {
         if (event.key === '1') {
-            changeGroupColor(hoveredBlock, purple);
-            hoveredBlock.userData.color = purple;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? oak : purple);
+            hoveredBlock.userData.color = levelType === 'rustic' ? oak : purple;
         } else if (event.key === '2') {
-            changeGroupColor(hoveredBlock, red);
-            hoveredBlock.userData.color = red;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? darkwood : red);
+            hoveredBlock.userData.color = levelType === 'rustic' ? darkwood : red;
         } else if (event.key === '3') {
-            changeGroupColor(hoveredBlock, orange);
-            hoveredBlock.userData.color = orange;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? mahagony : orange);
+            hoveredBlock.userData.color = levelType === 'rustic' ? mahagony : orange;
         } else if (event.key === '4') {
-            changeGroupColor(hoveredBlock, yellow);
-            hoveredBlock.userData.color = yellow;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? cedarwood : yellow);
+            hoveredBlock.userData.color = levelType === 'rustic' ? cedarwood : yellow;
         } else if (event.key === '5') {
-            changeGroupColor(hoveredBlock, green);
-            hoveredBlock.userData.color = green;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? redwood : green);
+            hoveredBlock.userData.color = levelType === 'rustic' ? redwood : green;
         } else if (event.key === '6') {
-            changeGroupColor(hoveredBlock, blue);
-            hoveredBlock.userData.color = blue;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? birch : blue);
+            hoveredBlock.userData.color = levelType === 'rustic' ? birch : blue;
         } else if (event.key === '7') {
-            changeGroupColor(hoveredBlock, pink);
-            hoveredBlock.userData.color = pink;
+            changeGroupColor(hoveredBlock, levelType === 'rustic' ? somewood : pink);
+            hoveredBlock.userData.color = levelType === 'rustic' ? somewood : pink;
         }
+    
 
         if (event.key === ' ') {
             const color = hoveredBlock.userData.color;
@@ -589,7 +768,6 @@ document.addEventListener('mousemove', (event) => {
 
 function removeBlockAndNeighbors(block, color) {
     if (!block) return;
-
     const index = blocks.indexOf(block);
     if (index === -1) return;
 
@@ -622,11 +800,9 @@ function getBlockAt(x, y, z) {
     );
 }
 
-let rotating = false;
-
 function rotateVerticalSlice(coordinate, axis) {
-    if (rotating) return;
-    rotating = true;
+    if (isRotating) return;
+    isRotating = true;
 
     let sliceBlocks;
     if (axis === 'x') {
@@ -663,7 +839,7 @@ function rotateVerticalSlice(coordinate, axis) {
         if (t < 1) {
             requestAnimationFrame(animateRotation);
         } else {
-            rotating = false;
+            isRotating = false;
             sliceBlocks.forEach(block => {
                 const worldPosition = new THREE.Vector3();
                 block.getWorldPosition(worldPosition);
@@ -692,11 +868,10 @@ function updateBlocksArray() {
     });
 }
 
-animate();
+animate()
 
 function animate() {
     requestAnimationFrame(animate);
-
     updateHoveredBlock();
     animateParticles();
     composer.render();
