@@ -51,6 +51,54 @@ startButton.addEventListener('click', () => {
 const levelSelect = document.getElementById('level-select');
 let levelType = levelSelect ? levelSelect.value : 'space';
 
+function applyTheme(theme) {
+    document.querySelector('#controls').className = `controls ${theme}`;
+    document.querySelectorAll('#menu button').forEach(button => {
+        button.className = `menu-button ${theme}`;
+    });
+}
+
+if (levelType === 'rustic') {
+    applyTheme('rustic');
+} else {
+    applyTheme('space');
+}
+
+const controlsList = document.getElementById('controls-list');
+function updateControls() {
+    const colorsSpace = [
+        { key: '1', label: 'purple', color: '#9B51E0' },
+        { key: '2', label: 'red', color: '#FF6F61' },
+        { key: '3', label: 'orange', color: '#FFB347' },
+        { key: '4', label: 'yellow', color: '#FFD700' },
+        { key: '5', label: 'green', color: '#6DD47E' },
+        { key: '6', label: 'blue', color: '#6EC1E4' },
+        { key: '7', label: 'pink', color: '#F3A5B1' },
+    ];
+
+    const colorsRustic = [
+        { key: '1', label: 'oak', color: '#A1662F' },
+        { key: '2', label: 'darkwood', color: '#746452' },
+        { key: '3', label: 'mahogany', color: '#C04000' },
+        { key: '4', label: 'cedarwood', color: '#9F4E35' },
+        { key: '5', label: 'redwood', color: '#856425' },
+        { key: '6', label: 'birch', color: '#EFDBAA' },
+        { key: '7', label: 'somewood', color: '#BF8F35' },
+    ];
+
+    const colors = levelType === 'rustic' ? colorsRustic : colorsSpace;
+
+    controlsList.innerHTML = '';
+
+    colors.forEach(({ key, label, color }) => {
+        const control = document.createElement('p');
+        control.innerHTML = `<strong>${key}</strong>: <span style="color: ${color};">${label}</span>`;
+        controlsList.appendChild(control);
+    });
+}
+
+updateControls();
+
 const scene = new THREE.Scene();
 
 const loader = new TextureLoader();
@@ -389,7 +437,7 @@ if (levelType === 'rustic') {
     scene.add(planeMesh);
 
     // Grass field parameters
-    const BLADE_COUNT = 129000; // adjust if performance is an issue
+    const BLADE_COUNT = 90000; // adjust if performance is an issue
     const BLADE_WIDTH = 0.3;
     const BLADE_HEIGHT = 0.8;
     const BLADE_HEIGHT_VARIATION = 0.9;

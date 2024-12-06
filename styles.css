@@ -34,6 +34,47 @@ body {
 #menu button:hover {
     background-color: #8440c3;
 }
+
+/* Rustic Theme #controls */
+#controls.rustic {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    width: 300px;
+    background-color: #8B4513; /* Rustic brown */
+    color: #FFF8DC; /* Cornsilk */
+    font-family: monospace;
+    padding: 40px;
+    border-radius: 10px;
+    border-top: 6px solid #DEB887; /* Burlywood */
+    border-left: 6px solid #D2B48C; /* Tan */
+    border-right: 6px solid #A0522D; /* Sienna */
+    border-bottom: 6px solid #6B4423; /* Darker brown */
+    /* visibility: hidden; */
+}
+#controls p span {
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+    padding: 2px 4px; /* Padding around the text */
+    border-radius: 4px; /* Rounded corners */
+}
+
+#menu button.rustic {
+    background-color: #8B4513; /* Rustic brown */
+    color: #FFF8DC; /* Cornsilk */
+    border-top: 6px solid #DEB887; /* Burlywood */
+    border-left: 6px solid #D2B48C; /* Tan */
+    border-right: 6px solid #A0522D; /* Sienna */
+    border-bottom: 6px solid #6B4423; /* Darker brown */
+    padding: 10px 20px;
+    font-size: 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: monospace;
+}
+
+#menu button.rustic:hover {
+    background-color: #A0522D; /* Sienna on hover */
+}
 #game-ui, footer {
     display: none; /* Hide game content initially */
 }
