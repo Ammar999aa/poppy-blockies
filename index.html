@@ -10,6 +10,15 @@
     <div id="menu">
         <h1>Poppy Blockies</h1>
         <div id="config-option">
+            <p>Select Level Type:</p>
+            <div></div>
+            <select id="level-select">
+                <option value="rustic">Rustic</option>
+                <option value="space" selected>Space</option>
+            </select>
+        </div>
+
+        <div id="config-option">
             <p>Set the block grid size:</p>
             <div></div>
             <select id="grid-size-select">
@@ -39,7 +48,6 @@
             <p>Set the number of moves:</p>
             <div></div>
             <input id="moves-input" type="number" placeholder="Move Number" value="25"/>
-            </select>
         </div>    
         <div id="config-option">
             <p>Enter a seed (optional):</p>
@@ -82,6 +90,8 @@
         const footer = document.querySelector('footer');
 
         startButton.addEventListener('click', () => {
+            const levelType = document.getElementById('level-select').value;
+
             menu.style.display = 'none'; // Hide the menu
             gameUI.classList.add('show'); // Show the game UI
             footer.classList.add('show'); // Show the footer

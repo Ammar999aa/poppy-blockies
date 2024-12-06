@@ -32,11 +32,30 @@ startButton.addEventListener('click', () => {
     }
 });
 
+const levelSelect = document.getElementById('level-select');
+let levelType = levelSelect ? levelSelect.value : 'space';
+
 const scene = new THREE.Scene();
 
 const loader = new TextureLoader();
 const bumpMap = loader.load('assets/wood_map.jpg');
 const textMap = loader.load('assets/wood_texture.jpg')
+
+
+// I need to set the skybox at game-setup instead!
+if (levelType === 'rustic') {
+    console.log("deff rust")
+    const skyboxLoader = new THREE.CubeTextureLoader();
+    const skyboxTexture = skyboxLoader.load([
+        'assets/field-skyboxes/sky_inter/xpos.png',
+        'assets/field-skyboxes/sky_inter/xneg.png',
+        'assets/field-skyboxes/sky_inter/ypos.png',
+        'assets/field-skyboxes/sky_inter/yneg.png',
+        'assets/field-skyboxes/sky_inter/zpos.png',
+        'assets/field-skyboxes/sky_inter/zneg.png'
+    ]);
+    scene.background = skyboxTexture;
+}
 
 const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(10, 15, 30);
@@ -73,6 +92,13 @@ const ambientLight = new THREE.AmbientLight(0x888888);
 scene.add(ambientLight);
 ambientLight.intensity = 2;
 
+if (levelType === 'rustic') {
+    topLight.color.set(0xffffff);
+    directionalLight.color.set(0xfff4e0);
+    ambientLight.color.set(0xaaa499);
+    ambientLight.intensity = 1.5;
+}
+
 
 let clock = new THREE.Clock();
 
@@ -99,41 +125,65 @@ const blue = 0x6EC1E4
 const purple = 0x9B51E0
 const pink = 0xF3A5B1
 
-const particleCount = 10000 / 1.7; // Number of particles
-const dummy = new THREE.Object3D();
-
-const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
-const particleMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0x888888,
-    metalness: 1.0,
-    roughness: 0.2,
-    clearcoat: 1,
-    clearcoatRoughness: 0.1,
-    emissive: new THREE.Color(0xffffff),
-    emissiveIntensity: 2,
-});
-const particleMesh = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
-
-// Add particles to the scene
-scene.add(particleMesh);
-
-// Generate random particle positions, rotations, and scales
+let particleMesh
 const particles = [];
-for (let i = 0; i < particleCount; i++) {
-    const x = Math.random() * 60 - 25;
-    const y = Math.random() * 60 - 25;
-    const z = Math.random() * 60 - 25;
-    const scale = Math.random() * 0.1 + 0.07;
+const dummy = new THREE.Object3D();
+if (levelType === 'space') {
+    const particleCount = 10000 / 1.7; // Number of particles
 
-    particles.push({
-        position: { x, y, z },
-        scale,
-        speed: Math.random() * 0.02 + 0.01,
-        factor: Math.random() * 10 + 1,
+    const particleGeometry = new THREE.DodecahedronGeometry(0.1, 0);
+    const particleMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0x888888,
+        metalness: 1.0,
+        roughness: 0.2,
+        clearcoat: 1,
+        clearcoatRoughness: 0.1,
+        emissive: new THREE.Color(0xffffff),
+        emissiveIntensity: 2,
     });
-}
+    particleMesh = new THREE.InstancedMesh(particleGeometry, particleMaterial, particleCount);
 
-// Animate the particles
+    // Add particles to the scene
+    scene.add(particleMesh);
+    // Generate random particle positions, rotations, and scales
+    for (let i = 0; i < particleCount; i++) {
+        const x = Math.random() * 60 - 25;
+        const y = Math.random() * 60 - 25;
+        const z = Math.random() * 60 - 25;
+        const scale = Math.random() * 0.1 + 0.07;
+
+        particles.push({
+            position: { x, y, z },
+            scale,
+            speed: Math.random() * 0.02 + 0.01,
+            factor: Math.random() * 10 + 1,
+        });
+    }
+}
+else if (levelType === 'rustic') {
+    const pollenCount = 500; // Much fewer than space
+    const pollenGeometry = new THREE.SphereGeometry(0.05, 6, 6);
+    const pollenMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffdf9e // a warm, pollen-like color
+    });
+    particleMesh = new THREE.InstancedMesh(pollenGeometry, pollenMaterial, pollenCount);
+    scene.add(particleMesh);
+
+    // Generate random pollen positions, subtle motion, less pronounced movement
+    for (let i = 0; i < pollenCount; i++) {
+        const x = Math.random() * 30 - 15;
+        const y = Math.random() * 30 - 10;
+        const z = Math.random() * 30 - 15;
+        const scale = Math.random() * 0.1 + 0.05;
+
+        particles.push({
+            position: { x, y, z },
+            scale,
+            speed: Math.random() * 0.005 + 0.002,
+            factor: Math.random() * 4 + 1,
+        });
+    }
+}
 function animateParticles() {
     particles.forEach((particle, i) => {
         const t = clock.getElapsedTime() * particle.speed;
@@ -160,7 +210,6 @@ function animateParticles() {
     // Notify Three.js that the instanced mesh has updated
     particleMesh.instanceMatrix.needsUpdate = true;
 }
-
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 
@@ -172,13 +221,16 @@ const bloomPass = new UnrealBloomPass(
 );
 composer.addPass(bloomPass);
 
-function createPyramidFrustum() {
-    const height = 0.15;
-    const topSize = 0.25; // Size of the top face
+function createPyramidFrustum(space = false) {
+    const spaceHeight = 0.15;
+    const spaceTopSize = 0.25; // Size of the top face
     const bottomSize = 0.5; // Size of the bottom face
 
     const woodHeight = 0.075
     const woodTopSize = 0.45 
+    let height, topSize;
+    if(space){ height = spaceHeight; topSize = spaceTopSize;}
+    else {height = woodHeight; topSize = woodTopSize}
 
 
     // Define the vertices for a frustum (truncated pyramid)
@@ -190,10 +242,10 @@ function createPyramidFrustum() {
         -bottomSize, 0, bottomSize, // 3
 
         // Top face (smaller square)
-        -woodTopSize, woodHeight, -woodTopSize, // 4
-        woodTopSize, woodHeight, -woodTopSize, // 5
-        woodTopSize, woodHeight, woodTopSize, // 6
-        -woodTopSize, woodHeight, woodTopSize  // 7
+        -topSize, height, -topSize, // 4
+        topSize, height, -topSize, // 5
+        topSize, height, topSize, // 6
+        -topSize, height, topSize  // 7
     ];
 
     // Define the faces (two triangles per side)
@@ -264,73 +316,89 @@ function createPyramidFrustum() {
 export function createBlockGrid(size, colorCount = 7, seed = Date.now().toString()) {
     const rng = seedrandom(seed);
 
+    // For rustic level, we use woodColors and textures
     const colors = [red, orange, yellow, green, blue, purple, pink].slice(0, colorCount);
     const woodColors = [oak, darkwood, mahagony, cedarwood, redwood, birch, somewood].slice(0, colorCount);
 
-    // Helper function to create a frustum and set its properties
-    function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0]) {
-        const frustum = createPyramidFrustum();
+    function createFrustumWithColor(color, rotation = [0, 0, 0], position = [0, 0, 0], space = false) {
+        const frustum = createPyramidFrustum(space);
         frustum.material.color.set(color);
-        frustum.rotation.set(rotation[0], rotation[1], rotation[2]);
-        frustum.position.set(position[0], position[1], position[2]);
-        frustum.castShadow = true;
-        frustum.receiveShadow = true;
+        frustum.rotation.set(...rotation);
+        frustum.position.set(...position);
         return frustum;
     }
 
     for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
             for (let z = 0; z < size; z++) {
-                // Assign a random color to each block
-                const randomColor = colors[Math.floor(rng() * colors.length)];
-                const randomWoodColor = woodColors[Math.floor(rng() * woodColors.length)];
+                let chosenColor;
+                let material;
+                if (levelType === 'rustic') {
+                    // Use wood colors and texture maps
+                    chosenColor = woodColors[Math.floor(rng() * woodColors.length)];
+                    material = new THREE.MeshStandardMaterial({ 
+                        color: chosenColor, 
+                        map: textMap, 
+                        bumpMap: bumpMap, 
+                        bumpScale: 1.4 
+                    });
+                } else {
+                    // Space level with plain colors
+                    chosenColor = colors[Math.floor(rng() * colors.length)];
+                    material = new THREE.MeshStandardMaterial({ color: chosenColor });
+                }
 
-                // Create the central cube
                 const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
-                const cubeMaterial = new THREE.MeshStandardMaterial({ color: randomWoodColor, map: textMap, bumpMap: bumpMap, bumpScale: 1.4 });
-                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                const cube = new THREE.Mesh(cubeGeometry, material);
                 cube.castShadow = true;
                 cube.receiveShadow = true;
 
-                // Create all the frustums and add them to a group
                 const group = new THREE.Group();
                 group.add(cube);
 
-                // Define the rotations and positions for each frustum
-                const frustumsData = [
-                    { rotation: [0, 0, 0], position: [0, 0.5, 0] },
-                    { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
-                    { rotation: [Math.PI / 2, 0, 0], position: [0, 0, 0.5] },
-                    { rotation: [-Math.PI / 2, 0, 0], position: [0, 0, -0.5] },
-                    { rotation: [0, 0, -Math.PI / 2], position: [0.5, 0, 0] },
-                    { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
-                ];
-
-                // Create frustums using the helper function
-                frustumsData.forEach(data => {
-                    const frustum = createFrustumWithColor(randomWoodColor, data.rotation, data.position);
-                    group.add(frustum);
-                });
-
-                // Position the group in the 3D grid
+                if (levelType === 'rustic') {
+                    // Add the frustums in rustic mode
+                    const frustumsData = [
+                        { rotation: [0, 0, 0], position: [0, 0.5, 0] },
+                        { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
+                        { rotation: [Math.PI / 2, 0, 0], position: [0, 0, 0.5] },
+                        { rotation: [-Math.PI / 2, 0, 0], position: [0, 0, -0.5] },
+                        { rotation: [0, 0, -Math.PI / 2], position: [0.5, 0, 0] },
+                        { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
+                    ];
+                    frustumsData.forEach(data => {
+                        const frustum = createFrustumWithColor(chosenColor, data.rotation, data.position);
+                        group.add(frustum);
+                    });
+                }
+                if (levelType === 'space') {
+                    // Add the frustums in rustic mode
+                    const frustumsData = [
+                        { rotation: [0, 0, 0], position: [0, 0.5, 0] },
+                        { rotation: [Math.PI, 0, 0], position: [0, -0.5, 0] },
+                        { rotation: [Math.PI / 2, 0, 0], position: [0, 0, 0.5] },
+                        { rotation: [-Math.PI / 2, 0, 0], position: [0, 0, -0.5] },
+                        { rotation: [0, 0, -Math.PI / 2], position: [0.5, 0, 0] },
+                        { rotation: [0, 0, Math.PI / 2], position: [-0.5, 0, 0] }
+                    ];
+                    frustumsData.forEach(data => {
+                        const frustum = createFrustumWithColor(chosenColor, data.rotation, data.position, true);
+                        group.add(frustum);
+                    });
+                }
                 group.position.set(
                     x - (size / 2) + 0.5,
                     y - (size / 2) + 0.5,
                     z - (size / 2) + 0.5
                 );
 
-                // Store the color in the group's userData for later use
-                group.userData.color = randomWoodColor;
-
-                // Add the group to the scene and blocks array
+                group.userData.color = chosenColor;
                 scene.add(group);
                 blocks.push(group);
             }
         }
     }
 }
-
-// This is just for the preview before the game begins
 createBlockGrid(5);
 
 // Event listeners
